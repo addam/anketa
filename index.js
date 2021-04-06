@@ -3,7 +3,7 @@ const assert = require("assert")
 const handlebars = require("express-handlebars")
 const bodyparser = require("body-parser")
 const crypto = require("crypto")
-const {questionStep} = require("./questions-disk")
+const {tridy, questionStep} = require("./questions-disk")
 const {answer} = require("./answers-disk")
 
 var app = express()

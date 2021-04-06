@@ -54,4 +54,4 @@ function questionStep(group, step) {
   return { done: true }
 }
 
-module.exports = {questionStep}
+module.exports = {tridy, questionStep}
