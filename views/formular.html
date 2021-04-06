@@ -1,0 +1,52 @@
+{{#*inline "radio" i j}}
+  <input type=radio name=otazka_{{i}} value={{j}} id={{i}}_{{j}} required><label for={{i}}_{{j}}>{{j}}</label>
+{{/inline}}
+
+{{#*inline "heading"}}
+  {{#if name}}
+    {{name}}, {{subject}}
+  {{else if text}}
+    {{text}}
+  {{else}}
+    Hotovo
+  {{/if}}
+{{/inline}}
+
+{{#*inline "hiddens"}}
+  <input type=hidden name=token value='{{token}}'>
+  <input type=hidden name=step value='{{step}}'>
+{{/inline}}
+
+<h1>{{>heading}}</h1>
+<form method=post>
+{{#if questions}}
+  <small>Hodnocení známkou (1 = výborně, 5 = nedostatečně):</small>
+  <table>
+  {{#each questions}}
+    <tr><td>{{this}}</td><td>
+    {{#each ../options}}
+      {{> radio i=@../index j=this}}
+    {{/each}}
+    </td></tr>
+  {{/each}}
+  <tr><td></td><td class=center><button>Odeslat</button></td>
+  </table>
+{{else if text}}
+  <small>Slovní odpověď:</small><br>
+  <textarea name=otazka rows=10 cols=120></textarea><br>
+  <button>Odeslat</button>
+{{else}}
+  <p>Dotazník máte hotový, díky za vyplnění.</p>
+{{/if}}
+{{> hiddens}}
+</form>
+
+{{#if questions}}
+  <form method=post>
+  <p>
+  Pokud tento předmět s tímto vyučujícím nemáte, můžete hodnocení vynechat:<br>
+  <button onclick='return confirm("Opravdu chcete vynechat hodnocení tohoto předmětu?");'>Přeskočit</button>
+  </p>
+  {{> hiddens}}
+  </form>
+{{/if}}
