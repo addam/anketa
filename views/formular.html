@@ -20,9 +20,17 @@
 <h1>{{>heading}}</h1>
 <form method=post>
 {{#if doubleQuestions}}
-  <small>Hodnocení známkou (1 = výborně, 5 = nedostatečně):</small>
   <table>
-  <tr><th></th><th>Při distanční výuce</th><th>Při běžné výuce</th></tr>
+  {{#each questions}}
+    <tr><td>{{this}}</td><td class=center colspan=2>
+    Zcela souhlasím
+    {{#each ../options}}
+      {{> radio i=@../index j=this t="s"}}
+    {{/each}}
+    Vůbec nesouhlasím
+    </td></tr>
+  {{/each}}
+  <tr><th><small>Hodnocení známkou (1 = výborně, 5 = nedostatečně)</small></th><th>Při distanční výuce</th><th>Při běžné výuce</th></tr>
   {{#each doubleQuestions}}
     <tr><td>{{this}}</td><td>
     {{#each ../options}}
@@ -34,9 +42,17 @@
     {{/each}}
     </td></tr>
   {{/each}}
-  <tr><td></td><td class=center><button>Odeslat</button></td>
+  <tr></tr>
+  <tr><td></td><td class=center colspan=2><button>Odeslat</button></td></tr>
   </table>
 {{else if text}}
+  <div>
+    Zcela souhlasím
+    {{#each options}}
+      {{> radio i=@../index j=this t="s"}}
+    {{/each}}
+    Vůbec nesouhlasím
+    </div>
   <small>Slovní odpověď:</small><br>
   <textarea name=otazka rows=10 cols=120></textarea><br>
   <button>Odeslat</button>
@@ -46,15 +62,15 @@
 {{> hiddens}}
 </form>
 
-{{#if questions}}
+{{#if options}}
   <form method=post>
   <p>
   {{#if subgroup}}
-  Pokud nejste ve skupině {{subgroup}}, můžete hodnocení vynechat:<br>
+  Pokud nejste ve skupině {{subgroup}} nebo nedokážete odpovědět, můžete hodnocení vynechat:<br>
   {{else}}
-  Pokud nedokážete na otazky odpovědět, můžete hodnocení vynechat:<br>
+  Pokud nedokážete odpovědět, můžete hodnocení vynechat:<br>
   {{/if}}
-  <button onclick='return confirm("Opravdu chcete vynechat hodnocení tohoto předmětu?");'>Přeskočit</button>
+  <button onclick='return confirm("{{#if doubleQuestions}}Opravdu chcete vynechat hodnocení tohoto předmětu?{{else}}Opravdu chcete vynechat tuto otázku?{{/if}}");'>Přeskočit</button>
   </p>
   {{> hiddens}}
   </form>

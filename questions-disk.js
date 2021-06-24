@@ -1,12 +1,9 @@
 const obecne = [
-  "Je distanční výuka složitější než prezenční? (Pokud ano, tak proč?)",
-  "Věnuji škole více času než v prezenční výuce?",
-  "Naučím se stejné množství látky jako v prezenční výuce?",
-  "Je distanční výuka složitější než prezenční? (Pokud ano, proč?)",
-  "Chtěl/a bych přenést prvky distanční výuky do prezenční výuky? (Ano, ne, jaké?)",
-  "Dostával/a jsem během distanční výuky více úkolů než během prezenční výuky? (Ano, ne, z jakých předmětů?)",
-  "Naučil/a jsem se stejné množství látky jako v prezenční výuce? (Souhlasím, nesouhlasím?)",
-  "Věnoval/a jsem více svého volného času škole v online výuce? (Souhlasím, nesouhlasím?)",
+  "Distanční výuka je složitější než prezenční (Pokud ano, proč?)",
+  "Chtěl/a bych přenést prvky distanční výuky do prezenční výuky (Pokud ano, jaké?)",
+  "Dostával/a jsem během distanční výuky více úkolů než během prezenční výuky (Pokud ano, z jakých předmětů?)",
+  "Naučil/a jsem se stejné množství látky jako v prezenční výuce",
+  "Věnoval/a jsem více svého volného času škole v online výuce",
 ]
 
 const dvojite = {m: [
@@ -28,9 +25,9 @@ const dvojite = {m: [
 ]}
 
 const jednoduche = {m: [
-  "Změnil se jeho přístup k předmětu během distanční výuky",
+  "Jeho přístup k předmětu se během distanční výuky změnil",
 ], f: [
-  "Změnil se její přístup k předmětu během distanční výuky",
+  "Její přístup k předmětu se během distanční výuky změnil",
 ]}
 
 const tridy = {pi: 'prima A', bi: 'prima B', su: 'sekunda', te: 'tercie', ka: 'kvarta', ki: 'kvinta', se: 'sexta', si: 'septima A', zi: 'septima B', ko: 'oktáva'}
@@ -40,7 +37,7 @@ const table = {"pi": [[0, 0, "Chl"], [1, 2, null], [13, 18, null], [13, 20, null
 
 function questionStep(group, step, seed) {
   if (step < obecne.length) {
-    return { text: obecne[step] }
+    return { text: obecne[step], options: [1, 2, 3, 4, 5] }
   } else {
     step -= obecne.length
   }
