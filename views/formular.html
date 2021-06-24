@@ -1,5 +1,5 @@
-{{#*inline "radio" i j}}
-  <input type=radio name=otazka_{{i}} value={{j}} id={{i}}_{{j}} required><label for={{i}}_{{j}}>{{j}}</label>
+{{#*inline "radio" i j t}}
+  <label><input type=radio name=otazka_{{t}}_{{i}} value={{j}} required>{{j}}</label>
 {{/inline}}
 
 {{#*inline "heading"}}
@@ -19,13 +19,18 @@
 
 <h1>{{>heading}}</h1>
 <form method=post>
-{{#if questions}}
+{{#if doubleQuestions}}
   <small>Hodnocení známkou (1 = výborně, 5 = nedostatečně):</small>
   <table>
-  {{#each questions}}
+  <tr><th></th><th>Při distanční výuce</th><th>Při běžné výuce</th></tr>
+  {{#each doubleQuestions}}
     <tr><td>{{this}}</td><td>
     {{#each ../options}}
-      {{> radio i=@../index j=this}}
+      {{> radio i=@../index j=this t="d"}}
+    {{/each}}
+    </td><td>
+    {{#each ../options}}
+      {{> radio i=@../index j=this t="p"}}
     {{/each}}
     </td></tr>
   {{/each}}
@@ -44,7 +49,11 @@
 {{#if questions}}
   <form method=post>
   <p>
-  Pokud tento předmět s tímto vyučujícím nemáte, můžete hodnocení vynechat:<br>
+  {{#if subgroup}}
+  Pokud nejste ve skupině {{subgroup}}, můžete hodnocení vynechat:<br>
+  {{else}}
+  Pokud nedokážete na otazky odpovědět, můžete hodnocení vynechat:<br>
+  {{/if}}
   <button onclick='return confirm("Opravdu chcete vynechat hodnocení tohoto předmětu?");'>Přeskočit</button>
   </p>
   {{> hiddens}}

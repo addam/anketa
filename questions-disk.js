@@ -1,15 +1,19 @@
 const obecne = [
-  "Je distanční výuka složitější než prezenční, pokud ano, tak proč?",
+  "Je distanční výuka složitější než prezenční? (Pokud ano, tak proč?)",
   "Věnuji škole více času než v prezenční výuce?",
   "Naučím se stejné množství látky jako v prezenční výuce?",
+  "Je distanční výuka složitější než prezenční? (Pokud ano, proč?)",
+  "Chtěl/a bych přenést prvky distanční výuky do prezenční výuky? (Ano, ne, jaké?)",
+  "Dostával/a jsem během distanční výuky více úkolů než během prezenční výuky? (Ano, ne, z jakých předmětů?)",
+  "Naučil/a jsem se stejné množství látky jako v prezenční výuce? (Souhlasím, nesouhlasím?)",
+  "Věnoval/a jsem více svého volného času škole v online výuce? (Souhlasím, nesouhlasím?)",
 ]
 
-const osobni = {m: [
+const dvojite = {m: [
   "Naučím se toho hodně v jeho hodinách",
   "Látka vysvětlována jasně a srozumitelně",
   "Zpestřuje hodiny",
   "Vede nás k samostatnému uvažování a hledání řešení",
-  "Preferuji mít s tímto profesorem prezenční výuku oproti distanční",
   "Zkoušení a písemky mají jasná pravidla, takže se na ně můžu připravit",
   "Jeho hodnocení rozumím a vím, co a proč mi vychází",
   "Ke studentům se chová vstřícně, vždy je připraven jim pomoci",
@@ -18,38 +22,33 @@ const osobni = {m: [
   "Látka vysvětlována jasně a srozumitelně",
   "Zpestřuje hodiny",
   "Vede nás k samostatnému uvažování a hledání řešení",
-  "Preferuji mít s touto profesorkou prezenční výuku oproti distanční",
   "Zkoušení a písemky mají jasná pravidla, takže se na ně můžu připravit",
   "Jejímu hodnocení rozumím a vím, co a proč mi vychází",
   "Ke studentům se chová vstřícně, vždy je připravena jim pomoci",
 ]}
 
-const tridy = {pi: 'prima A', bi: 'prima B', su: 'sekunda', te: 'tercie', ka: 'kvarta', ki: 'kvinta', se: 'sexta', si: 'septima A', zi: 'septima B', ko: 'oktáva'}
-const subjects = ['Estetická výchova výtvarná', 'Dramatická výchova', 'Tělesná výchova', 'Ruský jazyk - seminář', 'Společenskovědní základ', 'Španělský jazyk s lektorem', 'Biologie', 'Anglický jazyk s lektorem', 'Konverzace ve španělském jazyce', 'Cvičení z fyziky', 'Cvičení ze společenskovědního základu', 'Konverzace v ruském jazyce', 'Logika', 'Informační a komunikační technologie', 'Německý jazyk s lektorem', 'Matematika - seminář', 'Zeměpis - seminář', 'Deskriptivní geometrie - seminář', 'Společenskovědní základ - dramatická část', 'Zeměpis', 'Konverzace v německém jazyce', 'Programování - seminář', 'Německý jazyk', 'Obchodní angličtina', 'Přírodní vědy - seminář', 'Fyzika', 'Latina', 'Cvičení z matematiky', 'Etická výchova', 'Španělský jazyk', 'Ekonomika a účetnictví - seminář', 'Anglický jazyk', 'Estetická výchova hudební', 'Konverzace ve francouzském jazyce', 'Biologie - seminář', 'Výtvarná výchova', 'Anglická konverzace', 'Český jazyk a literatura - seminář', 'Francouzský jazyk', 'Matematika', 'Chemie', 'Člověk a moderní společnost', 'Fyzika - seminář', 'Výchova ke zdraví', 'Estetická výchova - seminář', 'Laboratorní práce', 'Chemie - seminář', 'Český jazyk a literatura', 'Dějepis', 'Hudební výchova', 'Dějepis - seminář']
-const people = [['Jílek Štěpán', 'm'], ['Kozubek Jan', 'm'], ['Kolmanová Jitka', 'f'], ['Řepa Martin', 'm'], ['Daněk Jan', 'm'], ['Polívka Jiří', 'm'], ['Šíba Michal', 'm'], ['Polášková Jana', 'f'], ['Pastyříková Vladimíra', 'f'], ['Hlaváček Antonín', 'm'], ['Marek Aleš', 'm'], ['Torres Isabel', 'f'], ['Tříska Pavel', 'm'], ['Nájemník Václav', 'm'], ['Farrimondová Helena', 'f'], ['Hovězáková Božena', 'f'], ['Ulrichová Hana', 'f'], ['Webb Robert Brisbane', 'm'], ['Ekrtová Marie', 'f'], ['Gürbig Friederike', 'f'], ['Horešovská Hana', 'f'], ['Kubíková Lucie', 'f'], ['Orr Alan John', 'm'], ['Dudilieux Marie', 'f'], ['Ambroz Michal', 'm'], ['Nesterova Alla', 'f'], ['Peterka Matyáš', 'm'], ['Suchardová Hana', 'f'], ['Zábranská Ivana', 'f'], ['Schneider Benjamin', 'm'], ['Smilek Petr', 'm'], ['Svobodová Helena', 'f'], ['Toulec Martin', 'm'], ['Dominec Adam', 'm'], ['Rabiecová Iveta', 'f']]
-const table = {
-  pi: [[0, 47], [14, 31], [2, 31], [1, 39], [32, 48], [29, 4], [16, 18], [34, 25], [18, 6], [5, 49], [7, 35], [24, 2], [20, 2], [21, 2]],
-  bi: [[10, 47], [14, 31], [2, 31], [1, 39], [21, 13], [32, 48], [29, 4], [1, 25], [26, 40], [6, 6], [24, 19], [18, 45], [26, 45], [30, 45], [5, 49], [34, 35], [24, 2], [21, 2], [22, 36], [16, 1], [26, 28]],
-  su: [[0, 47], [14, 31], [8, 31], [15, 22], [23, 38], [27, 29], [34, 39], [21, 13], [13, 48], [29, 4], [1, 25], [6, 40], [24, 19], [18, 45], [26, 45], [5, 49], [7, 35], [24, 2], [21, 2], [22, 36], [16, 1]],
-  te: [[0, 47], [8, 31], [22, 7], [15, 22], [23, 38], [27, 29], [1, 39], [21, 13], [13, 48], [1, 25], [26, 40], [18, 6], [24, 19], [5, 49], [7, 35], [24, 2], [21, 2], [20, 43], [22, 36], [16, 1], [26, 28]],
-  ka: [[0, 47], [2, 31], [22, 31], [8, 31], [17, 31], [22, 7], [15, 22], [23, 38], [27, 29], [34, 39], [33, 13], [32, 48], [32, 4], [30, 25], [26, 40], [31, 6], [5, 32], [7, 0], [24, 2], [20, 2]],
-  ki: [[10, 47], [2, 31], [22, 31], [8, 31], [17, 31], [22, 7], [15, 22], [23, 38], [27, 29], [28, 39], [33, 13], [13, 48], [13, 4], [30, 25], [18, 40], [6, 6], [5, 32], [7, 0], [24, 2], [21, 2]],
-  se: [[10, 47], [2, 31], [22, 31], [17, 31], [22, 7], [15, 22], [23, 38], [27, 29], [30, 39], [21, 13], [32, 48], [32, 4], [34, 25], [6, 40], [31, 6], [28, 19], [5, 32], [7, 0], [24, 2], [20, 2], [21, 2]],
-  si: [[10, 47], [2, 31], [22, 31], [17, 31], [22, 7], [15, 22], [19, 14], [23, 38], [27, 29], [11, 5], [34, 39], [13, 4], [13, 41], [28, 41], [20, 2], [21, 2], [10, 37], [13, 50], [7, 44], [9, 3], [25, 3], [1, 15], [28, 16], [31, 34], [18, 46], [6, 24], [30, 42], [34, 17], [3, 30], [33, 21], [19, 20], [23, 33], [11, 8], [30, 9], [12, 26], [32, 10], [32, 10], [12, 26], [26, 12], [26, 12], [30, 9]],
-  zi: [[10, 47], [2, 31], [22, 31], [17, 31], [22, 7], [15, 22], [19, 14], [23, 38], [27, 29], [11, 5], [28, 39], [13, 4], [13, 41], [28, 41], [20, 2], [10, 37], [13, 50], [7, 44], [9, 3], [25, 3], [1, 15], [28, 16], [31, 34], [18, 46], [6, 24], [30, 42], [34, 17], [3, 30], [33, 21], [19, 20], [23, 33], [11, 8], [30, 9], [12, 26], [32, 10], [19, 20], [11, 8], [12, 26], [26, 12], [26, 12], [30, 9]],
-  ko: [[0, 47], [4, 31], [22, 31], [22, 7], [15, 22], [19, 14], [23, 38], [27, 29], [11, 5], [28, 39], [13, 4], [32, 41], [24, 2], [20, 2], [10, 37], [32, 50], [7, 44], [9, 3], [30, 15], [28, 16], [31, 34], [6, 46], [6, 24], [30, 42], [34, 17], [33, 21], [19, 20], [11, 8], [9, 11], [30, 9], [28, 27], [12, 26], [32, 10], [32, 10], [19, 20], [12, 26], [30, 9], [22, 23]]}
+const jednoduche = {m: [
+  "Změnil se jeho přístup k předmětu během distanční výuky",
+], f: [
+  "Změnil se její přístup k předmětu během distanční výuky",
+]}
 
-function questionStep(group, step) {
+const tridy = {pi: 'prima A', bi: 'prima B', su: 'sekunda', te: 'tercie', ka: 'kvarta', ki: 'kvinta', se: 'sexta', si: 'septima A', zi: 'septima B', ko: 'oktáva'}
+const subjects = ['Tělesná výchova', 'Zeměpis', 'Anglický jazyk', 'Francouzský jazyk s lektorem', 'Konverzace ve francouzském jazyce', 'Informační a komunikační technologie', 'Programování - seminář', 'Francouzský jazyk', 'Biologie', 'Chemie', 'Přírodní vědy - seminář', 'Konverzace v německém jazyce', 'Německý jazyk s lektorem', 'Ruský jazyk - seminář', 'Ekonomika a účetnictví - seminář', 'Výchova ke zdraví', 'Německý jazyk', 'Český jazyk a literatura', 'Fyzika', 'Matematika - seminář', 'Matematika', 'Výtvarná výchova', 'Český jazyk a literatura - seminář', 'Konverzace ve španělském jazyce', 'Španělský jazyk', 'Dějepis - seminář', 'Dějepis', 'Společenskovědní základ', 'Člověk a moderní společnost', 'Anglická konverzace', 'Anglický jazyk s lektorem', 'Obchodní angličtina', 'Chemie - seminář', 'Etická výchova', 'Logika', 'Estetická výchova - seminář', 'Estetická výchova výtvarná', 'Estetická výchova hudební', 'Hudební výchova', 'Latina', 'Deskriptivní geometrie - seminář', 'Cvičení z fyziky', 'Cvičení z matematiky', 'Fyzika - seminář', 'Laboratorní práce', 'Biologie - seminář', 'Cvičení ze společenskovědního základu', 'Společenskovědní základ - dramatická část', 'Dramatická výchova', 'Zeměpis - seminář']
+const people = [['Ambroz Michal', 'm'], ['Brabcová Kateřina', 'f'], ['Djiboghlian Caroline', 'f'], ['Dominec Adam', 'm'], ['Dudilieux Marie', 'f'], ['Ekrtová Marie', 'f'], ['Gürbig Friederike', 'f'], ['Hlaváček Antonín', 'm'], ['Holická Ivana', 'f'], ['Horešovská Hana', 'f'], ['Hovězáková Božena', 'f'], ['Jílek Štěpán', 'm'], ['Kolmanová Jitka', 'f'], ['Kozubek Jan', 'm'], ['Kubíková Lucie', 'f'], ['Marek Aleš', 'm'], ['Morantes Sandra', 'f'], ['Nájemník Václav', 'm'], ['Nesterova Alla', 'f'], ['Orr Alan John', 'm'], ['Pastyříková Vladimíra', 'f'], ['Peterka Matyáš', 'm'], ['Polášková Jana', 'f'], ['Polívka Jiří', 'm'], ['Pospíšilová Eliška', 'f'], ['Pospíšilová Pavlína', 'f'], ['Rabiecová Iveta', 'f'], ['Smilek Petr', 'm'], ['Svobodová Helena', 'f'], ['Šíba Michal', 'm'], ['Toulec Martin', 'm'], ['Tříska Pavel', 'm'], ['Ulrichová Hana', 'f'], ['Voruda Petr', 'm'], ['Zábranská Ivana', 'f']]
+const table = {"pi": [[0, 0, "Chl"], [1, 2, null], [13, 18, null], [13, 20, null], [14, 0, "D\u00edv"], [15, 17, null], [17, 26, null], [20, 27, null], [21, 5, null], [22, 21, "AJ1"], [25, 21, "AJ2"], [29, 8, null], [32, 47, null], [33, 38, null]], "bi": [[0, 0, "Chl"], [5, 8, null], [12, 2, "AJ1"], [13, 20, null], [14, 0, "D\u00edv"], [15, 17, null], [17, 26, null], [17, 27, null], [20, 2, "AJ2"], [21, 5, null], [22, 21, "AJ1"], [25, 21, "AJ2"], [26, 18, null], [32, 47, null], [33, 38, null]], "su": [[0, 0, "Chl"], [0, 1, null], [5, 9, null], [11, 17, null], [12, 2, "AJ1"], [13, 21, null], [14, 5, null], [14, 0, "D\u00edv"], [19, 29, "AKn1"], [19, 30, null], [20, 2, "AJ2"], [20, 27, null], [21, 33, "ET"], [23, 38, null], [26, 20, null], [27, 18, null], [27, 44, null], [29, 8, null], [30, 26, null], [32, 48, null]], "te": [[0, 0, "D\u00edv"], [0, 1, null], [1, 2, "AJ1"], [3, 5, null], [4, 7, "FJ"], [5, 8, null], [9, 0, "D\u00edv"], [11, 17, null], [12, 2, "AJ2"], [12, 16, "NJ"], [14, 0, "Chl"], [16, 24, "\u0160J"], [19, 0, "Chl"], [19, 29, "AK1"], [19, 30, null], [20, 27, null], [21, 33, "ET"], [22, 21, null], [23, 38, null], [26, 18, null], [26, 20, null], [27, 44, "LP2"], [29, 9, null], [30, 26, null]], "ka": [[0, 0, "Chl"], [0, 1, null], [1, 2, "AJ2"], [3, 5, null], [4, 7, "FJ"], [5, 8, null], [9, 15, null], [10, 16, "NJ"], [13, 20, null], [14, 0, "D\u00edv"], [15, 17, null], [16, 24, "\u0160J"], [19, 29, "Ak"], [19, 30, null], [20, 2, "AJ1"], [21, 33, "ET"], [22, 21, null], [23, 38, null], [27, 18, null], [29, 9, null], [30, 26, null]], "ki": [[0, 0, "Chl"], [1, 2, "AJ1"], [3, 5, null], [4, 7, "FJ"], [9, 0, "D\u00edv"], [10, 16, "NJ"], [11, 17, null], [16, 24, "\u0160J"], [17, 26, null], [17, 27, null], [19, 30, null], [20, 2, "AJ2"], [22, 36, "EVV"], [23, 37, "EVH"], [26, 20, "MA2"], [27, 18, null], [29, 8, null], [29, 9, null], [34, 20, "MA1"]], "se": [[0, 1, null], [1, 2, "AJ1"], [2, 3, "FJ"], [4, 7, "FJ"], [5, 9, null], [6, 12, "NJ"], [9, 0, "D\u00edv"], [10, 16, "NJ"], [11, 17, null], [13, 20, "MA1"], [14, 5, null], [14, 0, "Chl"], [16, 24, "\u0160J"], [17, 26, null], [17, 27, null], [19, 30, null], [20, 2, "AJ2"], [22, 36, "EVV"], [23, 37, "EVH"], [26, 18, null], [28, 8, null], [34, 20, "MA2"]], "si": [[1, 2, "AJ1"], [2, 3, "FJ"], [2, 4, "FK"], [3, 6, "PGS"], [4, 7, "FJ"], [5, 10, "P\u0158"], [6, 11, "NK"], [6, 12, "NJ"], [7, 13, "RJS1"], [8, 14, "EKS"], [9, 0, "D\u00edv"], [10, 16, "NJ"], [11, 17, null], [12, 2, "AJ2"], [13, 19, "MAS"], [14, 0, "Chl"], [15, 22, "HU"], [16, 23, "\u0160Ks"], [16, 24, "\u0160J"], [17, 25, "HU"], [19, 30, null], [21, 32, "P\u0158"], [21, 34, "LG"], [22, 35, "EVV"], [24, 39, "LA"], [26, 40, "DGS"], [27, 41, "CFY"], [27, 42, "CMn"], [27, 43, "FYS2"], [28, 45, "BIS"], [30, 46, "CSVZ"], [30, 27, null], [30, 28, null], [34, 20, null], [34, 49, "ZES"]], "zi": [[1, 2, "AJ1"], [2, 3, "FJ"], [2, 4, "FK"], [3, 6, "PGS"], [4, 7, "FJ"], [5, 10, "P\u0158"], [6, 11, "NK"], [6, 12, "NJ"], [8, 14, "EKS"], [9, 0, "Chl"], [10, 16, "NJ"], [12, 2, "AJ1"], [13, 19, "MAS"], [14, 0, "D\u00edv"], [15, 22, "HU"], [15, 17, null], [16, 23, "\u0160Ks"], [16, 24, "\u0160J"], [17, 25, "HU"], [17, 27, null], [17, 28, null], [18, 13, "RJS2"], [19, 30, null], [21, 32, "P\u0158"], [21, 34, "LG"], [22, 35, "EVV"], [24, 39, "LA"], [26, 40, "DGS"], [27, 41, "CFY"], [27, 42, "CMn"], [27, 43, "FYS2"], [28, 45, "BIS"], [30, 46, "CSVZ"], [34, 20, null], [34, 49, "ZES"]], "ko": [[4, 7, "FJ"], [6, 11, "NK"], [7, 13, "RJS"], [9, 0, "D\u00edv"], [10, 16, "NJ"], [12, 2, null], [14, 0, "Chl"], [15, 22, "HU"], [15, 17, null], [16, 24, "\u0160J"], [19, 30, null], [19, 31, "EUS"], [22, 35, "EVV"], [26, 40, "DGS"], [27, 41, "CFY"], [27, 42, "CMn"], [27, 43, "FYS2"], [27, 20, null], [28, 45, "BIS"], [29, 32, "P\u0158"], [29, 10, "P\u0158"], [30, 46, "CSVZ"], [30, 25, "HU"], [30, 27, null], [30, 28, null], [31, 39, null], [34, 19, "MAS"], [34, 49, "ZES"]]}
+
+function questionStep(group, step, seed) {
   if (step < obecne.length) {
     return { text: obecne[step] }
   } else {
     step -= obecne.length
   }
   if (step < table[group].length) {
-    const [personId, subjectId] = table[group][step]
+    const [personId, subjectId, subgroup] = table[group][step]
     const [name, gender] = people[personId]
     const subject = subjects[subjectId]
-    return { name, subject, questions: osobni[gender], options: [1, 2, 3, 4, 5] }
+    return { name, subject, questions: jednoduche[gender], doubleQuestions: dvojite[gender], options: [1, 2, 3, 4, 5], subgroup }
   }
   return { done: true }
 }

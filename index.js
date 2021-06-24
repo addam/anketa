@@ -67,7 +67,7 @@ app.get("/", function (req, res) {
 app.post("/", async function (req, res) {
   if (req.group === shem) {
     const data = (req.user === shem)
-      ? Object.keys(tridy).map(t => generateToken(req.group, t))
+      ? Object.entries(tridy).map(([tr, name]) => `${name};` + generateToken(req.group, tr))
       : Array(26).fill().map((_, i) => i ? syllable(i) : shem).map(s => generateToken(req.user, s))
     const filename = (req.user === shem) ? "tokens-admin" : `tokens-${req.user}`
     res.set("Content-Disposition", `attachment; filename=${filename}.csv`)
