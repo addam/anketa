@@ -1,7 +1,6 @@
 const express = require("express")
 const assert = require("assert")
 const handlebars = require("express-handlebars")
-const bodyparser = require("body-parser")
 const crypto = require("crypto")
 const {tridy, questionStep} = require("./questions-disk")
 const {answer} = require("./answers-disk")
@@ -15,7 +14,7 @@ app.engine("html", handlebars({
 app.set("view engine", "html")
 app.set("views", "views")
 app.use("/static", express.static("static"))
-app.use(bodyparser.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }))
 
 const shem = "xy"
 const salt = "L5eGYoHGScSz5o7X"
