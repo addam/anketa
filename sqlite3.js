@@ -28,7 +28,7 @@ class Database {
   constructor(sub) {
     this.get = promisify(sub.get.bind(sub))
     this.run = promisify(sub.run.bind(sub))
-    this.whatever = () => { return "nazdar" }
+    this.all = promisify(sub.all.bind(sub))
     this.each = promisifyAsterisk(sub.each.bind(sub))
   }
 }

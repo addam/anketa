@@ -66,12 +66,50 @@ async function writePeople(filename) {
   }
 }
 
+async function updateSyllables() {
+  const rotate = (char, string) => {
+    return string[(string.search(char) + 1) % string.length]
+  }
+
+  const next = (syl, start) => {
+    const vow = "aeiu"
+    const cons = ["bp", "dt", "gk", "mn", "sz", "lr", "fhjv", "cqw"]
+    let [c, v] = syl.split("")
+    const [sc, sv] = start.split("")
+    if (c == sc) {
+      const group = cons.find(it => it.search(c) >= 0)
+      c = rotate(c, group)
+    } else {
+      v = rotate(v, vow)
+    }
+    if (c == sc && v == sv) {
+      throw new Error(`Conflicting syllables on "${start}"`)
+    }
+    return `${c}${v}`
+  }
+
+  const classes = await db.all("SELECT rowid, name FROM class")
+  const guess = {"0": "nu", "1": "pi", "2": "su", "3": "te", "4": "ka", "5": "ki", "6": "sa", "7": "si", "8": "ko"}
+
+  const existing = new Set()
+  for (cls of classes) {
+    const start = guess[cls.name[0]]
+    let syl = start
+    while (existing.has(syl)) {
+      syl = next(syl, start)
+    }
+    await db.run("UPDATE class SET syllable = ? WHERE rowid = ?", [syl, cls.rowid])
+    existing.add(syl)
+  }
+}
+
 async function importPeople(filename) {
   const fd = await fsp.open(filename)
   const parser = fd.createReadStream().pipe(parse())
   for await (const record of parser) {
     await ensureSubject(...record)
   }
+  await updateSyllables()
 }
 
 async function insertQuestion(teacher, cls, text) {
@@ -91,7 +129,7 @@ async function importQuestions(filename) {
 async function createTables() {
   const db = await Database.open('anketa.db');
   await db.run("CREATE TABLE IF NOT EXISTS teacher (name TEXT PRIMARY KEY)");
-  await db.run("CREATE TABLE IF NOT EXISTS class (name TEXT PRIMARY KEY)");
+  await db.run("CREATE TABLE IF NOT EXISTS class (name TEXT PRIMARY KEY, syllable TEXT)");
   await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id INTEGER REFERENCES class, name TEXT)");
   await db.run("CREATE TABLE IF NOT EXISTS question (teacher_id REFERENCES teacher DEFAULT null, class_id REFERENCES class DEFAULT null, question TEXT)");
   return db;
