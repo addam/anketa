@@ -1,7 +1,7 @@
-<form method=post>
-Opište klíč z lístečku: <input name=token>
-<button type=submit>Otevřít formulář</button>
+<form method="post">
 {{#if invalidToken}}
-<p class=error>Zadaný klíč nebyl rozpoznán.</p>
+<p class="error">Zadaný klíč nebyl rozpoznán.</p>
 {{/if}}
+<label>Opište kód z lístečku: <input type="text" name="token"></label><br>
+<button>&#9656; Otevřít formulář</button>
 </form>

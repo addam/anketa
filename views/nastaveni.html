@@ -1,0 +1,16 @@
+<form method=post>
+<p>Vyberte, které z dělených a volitelných předmětů budete hodnotit:</p>
+<div class="label-list">
+  {{#each subjects}}
+  <label><input type=checkbox name=subject_{{id}} value=1>{{subjectName}}, {{teacherName}}</label>
+  {{/each}}
+</div>
+<hr>
+<select>
+  <option selected>Výběr předmětů</option>
+  <option>Přehled dotazníku</option>
+</select>
+<button>&#9656; Další</button>
+<input type="hidden" name="token" value="{{token}}">
+<input type="hidden" name="step" value="{{step}}">
+</form>

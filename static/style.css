@@ -1,0 +1,91 @@
+:root {
+  --bg-a: #59f;
+  --fg-a: white;
+  --bg-b: #eee;
+  --fg-b: #444;
+  --border: #888;
+}
+body {
+  font-family: Open Sans, sans-serif;
+  color: var(--fg-b);
+  margin: 0;
+}
+form {
+  padding: 0 1rem;
+}
+h1, h2, h3 {
+  margin: 0.5rem 0;
+  box-sizing: border-box;
+  padding: 0.5rem 0 0 0;
+  text-align: justify;
+}
+h1 {
+  width: 100vw;
+  padding: 1rem 1rem 1rem 2rem;
+  background: var(--bg-a);
+  color: var(--fg-a);
+}
+h2:not(:first-of-type), hr {
+  border: none;
+  border-top: solid var(--bg-a) 4px;
+}
+hr {
+  margin: 1rem 0 0.5rem 0;
+}
+h2 {
+  margin: 1rem 0 0 0;
+}
+h3 {
+  margin: 0.5rem 0 0 0;
+}
+label {
+  display: inline-block;
+}
+.question input[type=text] {
+  width: 27em;
+  max-width: calc(100% - 8em);
+  min-width: 10em;
+}
+.center {
+  text-align: center;
+}
+.error {
+  color: red;
+}
+label {
+  user-select: none;
+}
+.label-list label {
+  display: block;
+}
+textarea {
+  width: 100%;
+  height: 8em;
+  box-sizing: border-box;
+}
+textarea, input, button, select {
+  border: 1px solid var(--border);
+}
+button, select {
+  padding: 0.5em 1em;
+  margin: 0.5em;
+  border-radius: 0.5em;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+button {
+  background: var(--bg-a);
+  color: var(--fg-a);
+  border: none;
+}
+button:hover {
+  background: #37d;
+}
+button.secondary, select {
+  background: var(--bg-b);
+  color: var(--fg-b);
+  border: 1px solid var(--border);
+}
+button.secondary:hover, select:hover {
+  background: #ddd;
+}

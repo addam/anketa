@@ -1,0 +1,38 @@
+<form method=post>
+<p>
+  Pro vyučujícího každého předmětu budete na škále od 1 (zcela souhlasím) do 5 (zcela nesouhlasím) hodnotit tato tři tvrzení:
+</p>
+<ul>
+<li>Její/jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.</li>
+<li>Myslím, že se ke všem chová spravedlivě a férově.</li>
+<li>Jedná se mnou s respektem.</li>
+</ul>
+<p>
+  Jednotliví vyučující mohou mít doplňující otázky, které se v takovém případě také zobrazí.
+</p>
+<p>
+  Vyučující budete hodnotit v následujícím vylosovaném pořadí:
+</p>
+<ol>
+{{#each subjects}}
+  <li>{{teacherName}}: {{subjectName}}</li>
+{{/each}}
+</ol>
+<p>
+  Hodnocení můžete kdykoliv přerušit a později se k němu vrátit.
+  Ukládá se průběžně.
+  I neúplné dotazníky budou započteny do výsledků.
+</p>
+<hr>
+<select>
+  <option>Výběr předmětů</option>
+  <option selected>Přehled dotazníku</option>
+{{#each subjects}}
+  <option>{{teacherName}} (?/?)</li>
+{{/each}}
+</select>
+<button>&#9656; Další</button>
+<input type="hidden" name="token" value="{{token}}">
+<input type="hidden" name="step" value="{{step}}">
+</form>
+</html>

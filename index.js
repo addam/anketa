@@ -2,8 +2,7 @@ const express = require("express")
 const assert = require("assert")
 const handlebars = require("express-handlebars")
 const crypto = require("crypto")
-const {tridy, questionStep} = require("./questions-disk")
-const {answer} = require("./answers-disk")
+const db = require("./db-sqlite")
 
 var app = express()
 app.engine("html", handlebars({
@@ -13,11 +12,11 @@ app.engine("html", handlebars({
 }))
 app.set("view engine", "html")
 app.set("views", "views")
-app.use("/static", express.static("static"))
+app.use(express.static("static"))
 app.use(express.urlencoded({ extended: true }))
 
 const shem = "xy"
-const salt = "L5eGYoHGScSz5o7X"
+const salt = "V5d4y2HfScSz5o7X"
 
 function forceInt(input) {
   const result = Math.round(input)
@@ -38,7 +37,7 @@ function readable(buffer) {
 function checksum(text) {
 	const hmac = crypto.createHmac("sha256", salt)
 	hmac.update(text)
-  return readable(hmac.digest().slice(0, 3))
+  return readable(hmac.digest().slice(0, 4))
 }
 
 function generateToken(group, user) {
@@ -60,27 +59,43 @@ app.use(function(req, res, next){
 })
 
 app.get("/", function (req, res) {
-	res.render("index", {})
+	res.render("index", { title: "Studentské dotazníky" })
 })
 
 app.post("/", async function (req, res) {
   if (req.group === shem) {
-    const data = (req.user === shem)
-      ? Object.entries(tridy).map(([tr, name]) => `${name};` + generateToken(req.group, tr))
-      : Array(26).fill().map((_, i) => i ? syllable(i) : shem).map(s => generateToken(req.user, s))
-    const filename = (req.user === shem) ? "tokens-admin" : `tokens-${req.user}`
-    res.set("Content-Disposition", `attachment; filename=${filename}.csv`)
-    res.set("Content-Type", "text/csv")
-    res.send(data.join("\r\n"))
+    if (req.user === shem) {
+      const tridy = await db.listClasses()
+      console.log(tridy)
+      const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(shem, syllable))
+      res.attachment("tokens-admin.csv");
+      res.send(data.join("\r\n"))
+    } else {
+      const userCount = 26
+      const testCount = 4
+      const group = req.user
+      const data = Array(userCount + testCount).fill().map((_, i) => i < testCount ? `x${i+1}` : syllable(i - testCount)).map(s => generateToken(group, s))
+      res.attachment(`tokens-${group}.csv`)
+      res.send(data.join("\r\n"))
+    }
   } else if (req.group !== undefined) {
     const client = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-    if (req.step) {
-      answer(req.group, req.user, req.step, client, req.body)
+    const step = (req.step || 0) + 1
+    const token = req.body.token
+    if (step > 3) {
+      await answer(req.group, req.user, req.step, client, req.body)
     }
-    const question = questionStep(req.group, req.step)
-    res.render("formular", {...question, step: req.step + 1, token: req.body.token})
+    if (step == 1) {
+      const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
+      res.render("nastaveni", { title: "Výběr předmětů", subjects, token, step })
+    } else if (step == 2) {
+      const subjects = await db.listSubjects(req.group)
+      res.render("prehled", { title: "Přehled dotazníku", subjects, token, step })
+    } else {
+      res.render("formular", { title: "Jméno Příjmení", token, step })
+    }
   } else {
-    res.render("index", {invalidToken: req.body.token})
+    res.render("index", { title: "Studentské dotazníky", invalidToken: req.body.token })
   }
 })
 

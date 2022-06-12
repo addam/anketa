@@ -34,11 +34,12 @@ async function classId(name) {
   return rowid
 }
 
-async function ensureSubject(cls, teacher, subject) {
+async function ensureSubject(cls, teacher, subject, optional) {
   const cid = await classId(cls)
   const tid = await teacherId(teacher)
-  await db.run("REPLACE INTO subject (teacher_id, class_id, name) VALUES (?, ?, ?)", [tid, cid, subject])
-  return [tid, cid, subject]
+  optional = optional || 0
+  await db.run("REPLACE INTO subject (teacher_id, class_id, name, optional) VALUES (?, ?, ?, ?)", [tid, cid, subject, optional])
+  return [tid, cid, subject, optional]
 }
 
 function getSubject(detail) {
@@ -130,8 +131,9 @@ async function createTables() {
   const db = await Database.open('anketa.db');
   await db.run("CREATE TABLE IF NOT EXISTS teacher (name TEXT PRIMARY KEY)");
   await db.run("CREATE TABLE IF NOT EXISTS class (name TEXT PRIMARY KEY, syllable TEXT)");
-  await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id INTEGER REFERENCES class, name TEXT)");
+  await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id INTEGER REFERENCES class, name TEXT, optional BOOL)");
   await db.run("CREATE TABLE IF NOT EXISTS question (teacher_id REFERENCES teacher DEFAULT null, class_id REFERENCES class DEFAULT null, question TEXT)");
+  await db.run("CREATE TABLE IF NOT EXISTS answer (teacher_id REFERENCES teacher, question_id REFERENCES question, class_id REFERENCES class, user_id INTEGER, answer INTEGER, comment TEXT, date TEXT)");
   return db;
 }
 
