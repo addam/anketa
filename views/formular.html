@@ -1,90 +1,27 @@
 <form method=post>
-<h2>Informační a komunikační technika</h2>
-<h3>Jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_1_1 value=1 required>1</label>
-    <label><input type=radio name=otazka_1_1 value=2 required>2</label>
-    <label><input type=radio name=otazka_1_1 value=3 required>3</label>
-    <label><input type=radio name=otazka_1_1 value=4 required>4</label>
-    <label><input type=radio name=otazka_1_1 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_1_1_text>
-</div>
-<h3>Myslím, že se ke všem chová spravedlivě a férově.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_1_2 value=1 required>1</label>
-    <label><input type=radio name=otazka_1_2 value=2 required>2</label>
-    <label><input type=radio name=otazka_1_2 value=3 required>3</label>
-    <label><input type=radio name=otazka_1_2 value=4 required>4</label>
-    <label><input type=radio name=otazka_1_2 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_1_2_text>
-</div>
-<h3>Jedná se mnou s respektem.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_1_3 value=1 required>1</label>
-    <label><input type=radio name=otazka_1_3 value=2 required>2</label>
-    <label><input type=radio name=otazka_1_3 value=3 required>3</label>
-    <label><input type=radio name=otazka_1_3 value=4 required>4</label>
-    <label><input type=radio name=otazka_1_3 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_1_3_text>
-</div>
-<h2>Kroužek improvizace</h2>
-<h3>Jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_2_1 value=1 required>1</label>
-    <label><input type=radio name=otazka_2_1 value=2 required>2</label>
-    <label><input type=radio name=otazka_2_1 value=3 required>3</label>
-    <label><input type=radio name=otazka_2_1 value=4 required>4</label>
-    <label><input type=radio name=otazka_2_1 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_2_1_text>
-</div>
-<h3>Myslím, že se ke všem chová spravedlivě a férově.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_2_2 value=1 required>1</label>
-    <label><input type=radio name=otazka_2_2 value=2 required>2</label>
-    <label><input type=radio name=otazka_2_2 value=3 required>3</label>
-    <label><input type=radio name=otazka_2_2 value=4 required>4</label>
-    <label><input type=radio name=otazka_2_2 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_2_2_text>
-</div>
-<h3>Jedná se mnou s respektem.</h3>
-<div class="question">
-    <label>Zcela souhlasím <input type=radio name=otazka_2_3 value=1 required>1</label>
-    <label><input type=radio name=otazka_2_3 value=2 required>2</label>
-    <label><input type=radio name=otazka_2_3 value=3 required>3</label>
-    <label><input type=radio name=otazka_2_3 value=4 required>4</label>
-    <label><input type=radio name=otazka_2_3 value=5 required>5 Vůbec nesouhlasím</label><br>
-    <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label><br>
-    Komentář: <input type="text" name=otazka_2_3_text>
-</div>
+{{#each teacherSubjects}}
+<h2>{{subjectName}}</h2>
+  {{#each questions}}
+  <h3>&bdquo;{{this}}&ldquo;</h3>
+  <div class="question">
+      <label>Zcela souhlasím <input type=radio name=otazka_1_1 value=1 required>1</label>
+      <label><input type=radio name=otazka_1_1 value=2 required>2</label>
+      <label><input type=radio name=otazka_1_1 value=3 required>3</label>
+      <label><input type=radio name=otazka_1_1 value=4 required>4</label>
+      <label><input type=radio name=otazka_1_1 value=5 required>5 Vůbec nesouhlasím</label><br>
+      Komentář: <input type="text" name=otazka_1_1_text><br>
+      <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label>
+  </div>
+  {{/each}}
+{{/each}}
 <h2>Další komentáře</h2>
 <textarea name="otazka_2"></textarea>
 <hr>
 <select>
-  <option>Výběr předmětů</option>
-  <option>Přehled dotazníku</option>
-  <option>Jan Kozubek (1/17)</option>
-  <option>Friderike Gürbig (2/17)</option>
-  <option selected>Adam Dominec (3/17)</option>
-  <option>Petr Smilek (4/17)</option>
-  <option>Někdo (5/17)</option>
-  <option>Někdo (6/17)</option>
-  <option>Někdo (7/17)</option>
-  <option>Někdo (8/17)</option>
-  <option>Někdo (9/17)</option>
-  <option>Někdo (10/17)</option>
-  <option>Někdo (11/17)</option>
-  <option>Někdo (12/17)</option>
-  <option>Někdo (13/17)</option>
-  <option>Někdo (14/17)</option>
-  <option>Někdo (15/17)</option>
-  <option>Někdo (16/17)</option>
-  <option>Někdo (17/17)</option>
+{{#each subjects}}
+  <option>{{teacherName}} (?/?)</li>
+{{/each}}
 </select>
 <button class="secondary" onclick="window.location='prehled-static.html'; return false;">&#8962; Zpět na přehled</button>
-<button>&#9656; Další</button>
+<button type="submit">&#9656; Další</button>
 </form>

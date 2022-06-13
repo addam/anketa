@@ -1,7 +1,7 @@
 const fsp = require('fs').promises;
 const got = require('got');
 const { JSDOM: JsDom } = require('jsdom');
-const { parse } = require('csv-parse');
+const { parse: parseCsv } = require('csv-parse');
 const { Database } = require('./sqlite3');
 
 var db;
@@ -18,28 +18,21 @@ async function fetchHtml(url) {
   return dom.window.document
 }
 
+async function ensureTeacher(name) {
+  if (String(name) == 'null') {
+    return null
+  }
+  return await db.getone("INSERT INTO teacher (name) VALUES (?) ON CONFLICT DO UPDATE SET name = name RETURNING rowid", [name])
+}
+
 async function teacherId(name) {
-  if (String(name) == 'null') {
-    return null
-  }
-  const { rowid } = await db.get("INSERT INTO teacher (name) VALUES (?) ON CONFLICT DO UPDATE SET name = name RETURNING rowid", [name])
-  return rowid
+  console.log("get teacher", name)
+  return await db.getone("SELECT rowid FROM teacher WHERE name = ?", [name])
 }
 
-async function classId(name) {
-  if (String(name) == 'null') {
-    return null
-  }
-  const { rowid } = await db.get("INSERT INTO class (name) VALUES (?) ON CONFLICT DO UPDATE SET name = name RETURNING rowid", [name])
-  return rowid
-}
-
-async function ensureSubject(cls, teacher, subject, optional) {
-  const cid = await classId(cls)
-  const tid = await teacherId(teacher)
-  optional = optional || 0
-  await db.run("REPLACE INTO subject (teacher_id, class_id, name, optional) VALUES (?, ?, ?, ?)", [tid, cid, subject, optional])
-  return [tid, cid, subject, optional]
+async function classId(cname) {
+  console.log("get class", cname)
+  return await db.getone("SELECT syllable FROM class WHERE name = ?", [cname])
 }
 
 function getSubject(detail) {
@@ -67,7 +60,7 @@ async function writePeople(filename) {
   }
 }
 
-async function updateSyllables() {
+async function ensureClass(cname) {
   const rotate = (char, string) => {
     return string[(string.search(char) + 1) % string.length]
   }
@@ -89,39 +82,45 @@ async function updateSyllables() {
     return `${c}${v}`
   }
 
-  const classes = await db.all("SELECT rowid, name FROM class")
-  const guess = {"0": "nu", "1": "pi", "2": "su", "3": "te", "4": "ka", "5": "ki", "6": "sa", "7": "si", "8": "ko"}
-
-  const existing = new Set()
-  for (cls of classes) {
-    const start = guess[cls.name[0]]
-    let syl = start
-    while (existing.has(syl)) {
-      syl = next(syl, start)
-    }
-    await db.run("UPDATE class SET syllable = ? WHERE rowid = ?", [syl, cls.rowid])
-    existing.add(syl)
+  let syl = await db.getone("SELECT syllable FROM class WHERE name = ?", [cname])
+  if (syl) {
+    return syl
   }
+  const guess = {"0": "nu", "1": "pi", "2": "su", "3": "te", "4": "ka", "5": "ki", "6": "sa", "7": "si", "8": "ko"}
+  const existing = new Set(await db.allone("SELECT syllable FROM class"))
+  const start = syl = guess[cname[0]]
+  while (existing.has(syl)) {
+    syl = next(syl, start)
+  }
+  await db.run("INSERT INTO class (syllable, name) VALUES (?, ?)", [syl, cname])
+  return syl
+}
+
+async function ensureSubject(cname, teacher, subject, optional) {
+  const gid = await ensureClass(cname)
+  const tid = await ensureTeacher(teacher)
+  optional = optional || 0
+  await db.run("REPLACE INTO subject (teacher_id, class_id, name, optional) VALUES (?, ?, ?, ?)", [tid, gid, subject, optional])
+  return [tid, gid, subject, optional]
 }
 
 async function importPeople(filename) {
   const fd = await fsp.open(filename)
-  const parser = fd.createReadStream().pipe(parse())
+  const parser = fd.createReadStream().pipe(parseCsv())
   for await (const record of parser) {
     await ensureSubject(...record)
   }
-  await updateSyllables()
 }
 
-async function insertQuestion(teacher, cls, text) {
+async function insertQuestion(teacher, cname, text) {
   const tid = await teacherId(teacher)
-  const cid = await classId(cls)
-  await db.run("REPLACE INTO question (teacher_id, class_id, question) VALUES (?, ?, ?)", [tid, cid, text])
+  const gid = await classId(cname)
+  await db.run("REPLACE INTO question (teacher_id, class_id, question) VALUES (?, ?, ?)", [tid, gid, text])
 }
 
 async function importQuestions(filename) {
   const fd = await fsp.open(filename)
-  const parser = fd.createReadStream().pipe(parse())
+  const parser = fd.createReadStream().pipe(parseCsv())
   for await (const record of parser) {
     await insertQuestion(...record)
   }
@@ -130,9 +129,10 @@ async function importQuestions(filename) {
 async function createTables() {
   const db = await Database.open('anketa.db');
   await db.run("CREATE TABLE IF NOT EXISTS teacher (name TEXT PRIMARY KEY)");
-  await db.run("CREATE TABLE IF NOT EXISTS class (name TEXT PRIMARY KEY, syllable TEXT)");
-  await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id INTEGER REFERENCES class, name TEXT, optional BOOL)");
+  await db.run("CREATE TABLE IF NOT EXISTS class (syllable TEXT PRIMARY KEY, name TEXT)");
+  await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id REFERENCES class, name TEXT, optional BOOL)");
   await db.run("CREATE TABLE IF NOT EXISTS question (teacher_id REFERENCES teacher DEFAULT null, class_id REFERENCES class DEFAULT null, question TEXT)");
+  await db.run("CREATE TABLE IF NOT EXISTS subject_choice (subject_id REFERENCES subject, class_id REFERENCES class, user_id INTEGER, UNIQUE(subject_id, class_id, user_id))");
   await db.run("CREATE TABLE IF NOT EXISTS answer (teacher_id REFERENCES teacher, question_id REFERENCES question, class_id REFERENCES class, user_id INTEGER, answer INTEGER, comment TEXT, date TEXT)");
   return db;
 }

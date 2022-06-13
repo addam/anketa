@@ -13,14 +13,46 @@ function promisify(func) {
 }
 
 function promisifyAsterisk(func) {
-  return function*(...args) {
-    func(...args, (err, row) => {
-      if (err) {
-        throw err
-      } else {
-        yield(row)
+  const sentinel = new Error("end iteration")
+  let innerStep
+  let innerEnd
+  const step = (err, data) => {
+    if (err) {
+      innerEnd(err)
+    } else {
+      innerStep(data)
+    }
+  }
+  const end = (err, _) => {
+    innerEnd(err || sentinel)
+  }
+  const asynchronous = () => new Promise((resolve, reject) => {
+    // invert function flow back to reverse
+    innerStep = resolve
+    innerEnd = reject
+  })
+  async function* iterate(...args) {
+    func(...args, step, end)
+    try {
+      while (1) {
+        const res = await asynchronous()
+        yield res
       }
-    })
+    } catch (e) {
+      if (e == sentinel) {
+        return
+      }
+      throw e
+    }
+  }
+  return iterate
+}
+
+
+function one(object) {
+  console.log("one from", object)
+  for (const key in object) {
+    return object[key]
   }
 }
 
@@ -30,6 +62,14 @@ class Database {
     this.run = promisify(sub.run.bind(sub))
     this.all = promisify(sub.all.bind(sub))
     this.each = promisifyAsterisk(sub.each.bind(sub))
+  }
+  
+  async getone(...args) {
+    return one(await this.get(...args))
+  }
+
+  async allone(...args) {
+    return (await this.all(...args)).map(it => one(it))
   }
 }
 

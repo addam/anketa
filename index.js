@@ -1,4 +1,5 @@
 const express = require("express")
+const cookieParser = require('cookie-parser')
 const assert = require("assert")
 const handlebars = require("express-handlebars")
 const crypto = require("crypto")
@@ -14,6 +15,7 @@ app.set("view engine", "html")
 app.set("views", "views")
 app.use(express.static("static"))
 app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 
 const shem = "xy"
 const salt = "V5d4y2HfScSz5o7X"
@@ -46,13 +48,12 @@ function generateToken(group, user) {
 }
 
 app.use(function(req, res, next){
-  const token = (req.body.token || "").toLowerCase()
+  const token = (req.body.token || req.cookies.token || "").toLowerCase()
   if (token && token.length > 4) {
     const [payload, check] = [token.slice(0, 4), token.slice(4)]
     if (check === checksum(payload)) {
       req.group = payload.slice(0, 2)
       req.user = payload.slice(2, 4)
-      req.step = forceInt(req.body.step)
     }
   }
   next()
@@ -62,7 +63,45 @@ app.get("/", function (req, res) {
 	res.render("index", { title: "Studentské dotazníky" })
 })
 
+app.get("/ready", async function (req, res) {
+  const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
+  res.render("nastaveni", { title: "Výběr předmětů", subjects })
+})
+
+app.post("/ready", async function (req, res) {
+  await db.chooseSubjects(req.group, req.user, req.body)
+  res.redirect(303, `/steady`)
+})
+
+app.get("/steady", async function (req, res) {
+  const subjects = await db.chosenSubjects(req.group, req.user)
+  res.render("prehled", { title: "Přehled dotazníku", subjects })
+})
+
+app.post("/steady", async function (req, res) {
+  res.redirect(303, `/go/1`)
+})
+
+app.get("/go/:step", async function (req, res) {
+  const step = Number(req.params.step)
+  const { teacherName, subjects: teacherSubjects } = await db.chosenSubjects(req.group, req.user, step)
+  const subjects = await db.listSubjects(req.group)
+  console.log(teacherSubjects)
+  res.render("formular", { title: teacherName, teacherSubjects, subjects })
+})
+
+app.post("/go/:step", async function (req, res) {
+  const client = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  await answer(req.group, req.user, req.step, client, req.body)
+  res.redirect(303, `/go/${req.step + 1}`)
+})
+
 app.post("/", async function (req, res) {
+  res.cookie('token', req.body.token, { secure: true })
+  res.redirect(303, '/ready')
+})
+
+app.get("/tokens.csv", async function (req, res) {
   if (req.group === shem) {
     if (req.user === shem) {
       const tridy = await db.listClasses()
@@ -79,21 +118,6 @@ app.post("/", async function (req, res) {
       res.send(data.join("\r\n"))
     }
   } else if (req.group !== undefined) {
-    const client = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-    const step = (req.step || 0) + 1
-    const token = req.body.token
-    if (step > 3) {
-      await answer(req.group, req.user, req.step, client, req.body)
-    }
-    if (step == 1) {
-      const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
-      res.render("nastaveni", { title: "Výběr předmětů", subjects, token, step })
-    } else if (step == 2) {
-      const subjects = await db.listSubjects(req.group)
-      res.render("prehled", { title: "Přehled dotazníku", subjects, token, step })
-    } else {
-      res.render("formular", { title: "Jméno Příjmení", token, step })
-    }
   } else {
     res.render("index", { title: "Studentské dotazníky", invalidToken: req.body.token })
   }
