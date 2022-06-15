@@ -132,8 +132,8 @@ async function createTables() {
   await db.run("CREATE TABLE IF NOT EXISTS class (syllable TEXT PRIMARY KEY, name TEXT)");
   await db.run("CREATE TABLE IF NOT EXISTS subject (teacher_id INTEGER REFERENCES teacher, class_id REFERENCES class, name TEXT, optional BOOL)");
   await db.run("CREATE TABLE IF NOT EXISTS question (teacher_id REFERENCES teacher DEFAULT null, class_id REFERENCES class DEFAULT null, question TEXT)");
-  await db.run("CREATE TABLE IF NOT EXISTS subject_choice (subject_id REFERENCES subject, class_id REFERENCES class, user_id INTEGER, UNIQUE(subject_id, class_id, user_id))");
-  await db.run("CREATE TABLE IF NOT EXISTS answer (teacher_id REFERENCES teacher, question_id REFERENCES question, class_id REFERENCES class, user_id INTEGER, answer INTEGER, comment TEXT, date TEXT)");
+  await db.run("CREATE TABLE IF NOT EXISTS subject_choice (subject_id REFERENCES subject, class_id REFERENCES class, user_id TEXT, UNIQUE(subject_id, class_id, user_id))");
+  await db.run("CREATE TABLE IF NOT EXISTS answer (teacher_id REFERENCES teacher, question_id REFERENCES question, class_id REFERENCES class, user_id TEXT, answer INTEGER, comment TEXT, date TEXT)");
   return db;
 }
 

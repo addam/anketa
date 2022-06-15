@@ -15,7 +15,7 @@
 </p>
 <ol>
 {{#each subjects}}
-  <li>{{teacherName}}: {{subjectName}}</li>
+  <li>{{teacherName}}: {{joinBy subjects "subjectName" ", "}}</li>
 {{/each}}
 </ol>
 <p>
@@ -28,7 +28,7 @@
   <option>Výběr předmětů</option>
   <option selected>Přehled dotazníku</option>
 {{#each subjects}}
-  <option>{{teacherName}} (?/?)</li>
+  <option>{{teacherName}} ({{inc @index}}/{{../subjects.length}})</option>
 {{/each}}
 </select>
 <button type="submit">&#9656; Další</button>

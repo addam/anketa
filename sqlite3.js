@@ -2,11 +2,11 @@ const sqlite3 = require('sqlite3');
 
 function promisify(func) {
   return (...args) => new Promise((resolve, reject) => {
-    const result = func(...args, (err, data) => {
+    func(...args, (err, data) => {
       if (err) {
         reject(err)
       } else {
-        resolve(data || result)
+        resolve(data || {})
       }
     })
   })
@@ -50,7 +50,6 @@ function promisifyAsterisk(func) {
 
 
 function one(object) {
-  console.log("one from", object)
   for (const key in object) {
     return object[key]
   }
@@ -58,6 +57,7 @@ function one(object) {
 
 class Database {
   constructor(sub) {
+    this.exec = promisify(sub.exec.bind(sub))
     this.get = promisify(sub.get.bind(sub))
     this.run = promisify(sub.run.bind(sub))
     this.all = promisify(sub.all.bind(sub))

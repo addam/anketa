@@ -2,15 +2,15 @@
 {{#each teacherSubjects}}
 <h2>{{subjectName}}</h2>
   {{#each questions}}
-  <h3>&bdquo;{{this}}&ldquo;</h3>
+  <h3>&bdquo;{{question}}&ldquo;</h3>
   <div class="question">
-      <label>Zcela souhlasím <input type=radio name=otazka_1_1 value=1 required>1</label>
-      <label><input type=radio name=otazka_1_1 value=2 required>2</label>
-      <label><input type=radio name=otazka_1_1 value=3 required>3</label>
-      <label><input type=radio name=otazka_1_1 value=4 required>4</label>
-      <label><input type=radio name=otazka_1_1 value=5 required>5 Vůbec nesouhlasím</label><br>
-      Komentář: <input type="text" name=otazka_1_1_text><br>
-      <label><input type=radio name=otazka_1_1 value="null" required>Nebudu hodnotit</label>
+      <label>Zcela souhlasím <input type=radio name="otazka_{{../teacherId}}_{{id}}" value=1 required>1</label>
+      <label><input type=radio name="otazka_{{../teacherId}}_{{id}}" value=2 required>2</label>
+      <label><input type=radio name="otazka_{{../teacherId}}_{{id}}" value=3 required>3</label>
+      <label><input type=radio name="otazka_{{../teacherId}}_{{id}}" value=4 required>4</label>
+      <label><input type=radio name="otazka_{{../teacherId}}_{{id}}" value=5 required>5 Vůbec nesouhlasím</label><br>
+      Komentář: <input type="text" name="otazka_{{../teacherId}}_{{id}}_text"><br>
+      <label><input type=radio name="otazka_{{../teacherId}}_{{id}}" value="null" required>Nebudu hodnotit</label>
   </div>
   {{/each}}
 {{/each}}
@@ -18,10 +18,12 @@
 <textarea name="otazka_2"></textarea>
 <hr>
 <select>
+  <option>Výběr předmětů</option>
+  <option>Přehled dotazníku</option>
 {{#each subjects}}
-  <option>{{teacherName}} (?/?)</li>
+  <option>{{teacherName}} ({{inc @index}}/{{../subjects.length}})</option>
 {{/each}}
 </select>
-<button class="secondary" onclick="window.location='prehled-static.html'; return false;">&#8962; Zpět na přehled</button>
+<button class="secondary" onclick="window.location='/steady'; return false;">&#8962; Zpět na přehled</button>
 <button type="submit">&#9656; Další</button>
 </form>

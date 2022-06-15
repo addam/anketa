@@ -16,17 +16,17 @@ function shuffle(array, hash) {
 }
 
 function groupByTeacher(subjects) {
-  const result = {}
+  const groups = {}
   for (const sub of subjects) {
     tid = sub.teacherId
-    let list = result[tid]
+    let list = groups[tid]
     if (!list) {
       list = []
-      result[tid] = list
+      groups[tid] = list
     }
     list.push(sub)
   }
-  return Object.entries(result).map(([teacherId, subjects]) => ({ teacherId, subjects }))
+  return Object.entries(groups).map(([teacherId, subjects]) => ({ teacherId, subjects, teacherName: subjects[0].teacherName }))
 }
 
 init()
@@ -62,41 +62,54 @@ async listSubjects(gid) {
 async chooseSubjects(gid, uid, body) {
   await db.run("DELETE FROM subject_choice WHERE class_id = ? and user_id = ?", [gid, uid])
   console.log(gid, uid, body)
-  for await (const sid of db.each("SELECT rowid FROM subject WHERE optional = 1 AND class_id = ?", [gid])) {
+  for await (const { rowid: sid } of db.each("SELECT rowid FROM subject WHERE optional = 1 AND class_id = ?", [gid])) {
     console.log(sid, `subject_${sid}`, body[`subject_${sid}`])
     if (body[`subject_${sid}`] == 1) {
-      return await db.run("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
+      await db.exec("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
     }
   }
 },
 
-async chosenSubjects(gid, uid, step) {
+async chosenSubjects(gid, uid) {
   const subjects = await db.all(`SELECT subject.rowid id, teacher.rowid teacherId, teacher.name teacherName, subject.name subjectName
     FROM subject
     JOIN teacher ON teacher.rowid = subject.teacher_id
     LEFT JOIN subject_choice sc ON sc.subject_id = subject.rowid
     WHERE subject.class_id = ? 
     AND (subject.optional = 0 OR sc.user_id = ?)`, [gid, uid])
-  const list = groupByTeacher(subjects)
+  const result = groupByTeacher(subjects)
   const salt = 17 * uid.charCodeAt(0) + 37 * uid.charCodeAt(1)
-  shuffle(list, ({ teacherId }) => salt * teacherId)
-  const result = list[step]
-  for (const sub of result.subjects) {
-    sub.questions = await db.all(`SELECT question FROM question
-      WHERE teacher_id IN (?, null)
-      AND class_id IN (?, null)`, [sub.teacherId, gid])
-    result.teacherName = sub.teacherName
-  }
+  shuffle(result, ({ teacherId }) => salt * teacherId)
   return result
+},
+
+async fillQuestions(group, teacher) {
+    if (!teacher) {
+      return null
+    }
+    for (const sub of teacher.subjects) {
+      sub.questions = await db.all(`SELECT rowid id, question FROM question
+        WHERE (teacher_id = ? OR teacher_id IS null)
+        AND (class_id = ? OR class_id IS null)`, [teacher.teacherId, group])
+    }
+    return teacher
 },
 
 async answer(group, user, step, client, content) {
   const time = new Date()
-  const name = "otazka"
-  const data = Object.keys(content).filter(k => k.startsWith(name)).sort().map(k => content[k].replace(/\r?\n|\r/g, "//"))
-  const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, cid, uid, answer, text])
-  const result = [rowid, time.toJSON(), client, group, user, step, ...data]
-  await fsp.appendFile("data.csv", result.join(",") + "\n", ()=>{})
+  const regex = /^otazka_([0-9])_([0-9])?$/
+  for (const key of Object.keys(content)) {
+    const match = regex.exec(key)
+    if (match === null) {
+      continue
+    }
+    const [_, tid, qid, isText] = match
+    const num = Number(content[key])
+    const comment = (content[`${key}_text`] || "").replace(/\r?\n|\r/g, "//")
+    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, group, user, num, comment])
+    const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
+    await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
+  }
 },
 
 }

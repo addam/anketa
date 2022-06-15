@@ -9,6 +9,12 @@ var app = express()
 app.engine("html", handlebars({
   extname: ".html",
   helpers: {
+    joinBy(data, field, delimiter) {
+      return data.map(it=>it[field]).join(delimiter)
+    },
+    inc(num) {
+      return num + 1
+    }
   }
 }))
 app.set("view engine", "html")
@@ -16,9 +22,16 @@ app.set("views", "views")
 app.use(express.static("static"))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+// TODO fix error handling
+//app.use(errorHandler)
 
 const shem = "xy"
 const salt = "V5d4y2HfScSz5o7X"
+
+function errorHandler (err, req, res, next) {
+  console.error("errorHandler", err)
+  res.status(500).send({ error: 'Something failed!' })
+}
 
 function forceInt(input) {
   const result = Math.round(input)
@@ -64,13 +77,21 @@ app.get("/", function (req, res) {
 })
 
 app.get("/ready", async function (req, res) {
-  const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
-  res.render("nastaveni", { title: "Výběr předmětů", subjects })
+  if (req.group == "xy") {
+    res.redirect(303, "/tokens.csv")
+  } else {
+    const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
+    res.render("nastaveni", { title: "Výběr předmětů", subjects })
+  }
 })
 
 app.post("/ready", async function (req, res) {
-  await db.chooseSubjects(req.group, req.user, req.body)
-  res.redirect(303, `/steady`)
+  if (req.group && req.user) {
+    await db.chooseSubjects(req.group, req.user, req.body)
+    res.redirect(303, "/steady")
+  } else {
+    res.redirect(303, "/")
+  }
 })
 
 app.get("/steady", async function (req, res) {
@@ -79,21 +100,31 @@ app.get("/steady", async function (req, res) {
 })
 
 app.post("/steady", async function (req, res) {
-  res.redirect(303, `/go/1`)
+  res.redirect(303, "/go/1")
 })
 
 app.get("/go/:step", async function (req, res) {
   const step = Number(req.params.step)
-  const { teacherName, subjects: teacherSubjects } = await db.chosenSubjects(req.group, req.user, step)
-  const subjects = await db.listSubjects(req.group)
-  console.log(teacherSubjects)
-  res.render("formular", { title: teacherName, teacherSubjects, subjects })
+  if (req.group && req.user && step) {
+    const subjects = await db.chosenSubjects(req.group, req.user)
+    const teacher = subjects[step - 1]
+    if (teacher) {
+      await db.fillQuestions(req.group, teacher)
+      res.render("formular", { title: teacher.teacherName, teacherSubjects: teacher.subjects, subjects })
+    } else {
+      res.render("konec", { title: "Konec dotazníku", subjects })
+    }
+  } else {
+    console.log("missing data:", req.group, req.user, step)
+    res.redirect(303, `/`)
+  }
 })
 
 app.post("/go/:step", async function (req, res) {
+  const step = Number(req.params.step)
   const client = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-  await answer(req.group, req.user, req.step, client, req.body)
-  res.redirect(303, `/go/${req.step + 1}`)
+  await db.answer(req.group, req.user, step, client, req.body)
+  res.redirect(303, `/go/${step + 1}`)
 })
 
 app.post("/", async function (req, res) {
