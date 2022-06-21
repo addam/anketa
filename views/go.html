@@ -1,0 +1,23 @@
+<form method=post>
+{{#each teacherSubjects}}
+<h2>{{subjectName}}</h2>
+  {{#each questions}}
+  <h3>&bdquo;{{question}}&ldquo;</h3>
+  <div class="question">
+      <label>Zcela souhlasím <input type=radio name="otazka_{{../subjectId}}_{{id}}" value=1 required>1</label>
+      <label><input type=radio name="otazka_{{../subjectId}}_{{id}}" value=2 required>2</label>
+      <label><input type=radio name="otazka_{{../subjectId}}_{{id}}" value=3 required>3</label>
+      <label><input type=radio name="otazka_{{../subjectId}}_{{id}}" value=4 required>4</label>
+      <label><input type=radio name="otazka_{{../subjectId}}_{{id}}" value=5 required>5 Vůbec nesouhlasím</label><br>
+      Komentář: <input type="text" name="otazka_{{../subjectId}}_{{id}}_text"><br>
+      <label><input type=radio name="otazka_{{../subjectId}}_{{id}}" value="null" required>Nebudu hodnotit</label>
+  </div>
+  {{/each}}
+{{/each}}
+<h2>Další komentáře</h2>
+<textarea name="otazka_2"></textarea>
+<hr>
+{{> navigator }}
+{{> home }}
+<button type="submit">&#9656; Další</button>
+</form>

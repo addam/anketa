@@ -24,13 +24,6 @@
   I neúplné dotazníky budou započteny do výsledků.
 </p>
 <hr>
-<select>
-  <option>Výběr předmětů</option>
-  <option selected>Přehled dotazníku</option>
-{{#each subjects}}
-  <option>{{teacherName}} ({{inc @index}}/{{../subjects.length}})</option>
-{{/each}}
-</select>
+{{> navigator }}
 <button type="submit">&#9656; Další</button>
 </form>
-</html>

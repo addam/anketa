@@ -1,0 +1,10 @@
+<form method="post" action="/last">
+{{#each questions}}
+<h2>{{question}}</h2>
+<textarea name="otazka_{{id}}"></textarea>
+{{/each}}
+<hr>
+{{> navigator }}
+<button type="submit">&#9656; Další</button>
+</form>
+</html>

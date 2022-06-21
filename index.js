@@ -2,19 +2,18 @@ const express = require("express")
 const cookieParser = require('cookie-parser')
 const assert = require("assert")
 const handlebars = require("express-handlebars")
-const crypto = require("crypto")
+const url = require("url")
 const db = require("./db-sqlite")
+const { checksum, generateToken } = require("./token")
 
 var app = express()
 app.engine("html", handlebars({
   extname: ".html",
   helpers: {
-    joinBy(data, field, delimiter) {
-      return data.map(it=>it[field]).join(delimiter)
-    },
-    inc(num) {
-      return num + 1
-    }
+    joinBy: (data, field, delimiter) => (data.map(it=>it[field]).join(delimiter)),
+    inc: (num) => (num + 1),
+    eq: (a, b) => (a == b),
+    add: (...args) => (args.slice(0, args.length - 1).reduce((a, b) => a+b)),
   }
 }))
 app.set("view engine", "html")
@@ -26,38 +25,19 @@ app.use(cookieParser())
 //app.use(errorHandler)
 
 const shem = "xy"
-const salt = "V5d4y2HfScSz5o7X"
-
-function errorHandler (err, req, res, next) {
-  console.error("errorHandler", err)
-  res.status(500).send({ error: 'Something failed!' })
-}
 
 function forceInt(input) {
   const result = Math.round(input)
   return (Number.isFinite(result)) ? result : 0
 }
 
-function syllable(int) {
-  const sa = "aeiu".split("")
-  const su = "bdfghjklmnprstvz".split("")
-  const alphabet = sa.flatMap(a => su.map(h => h+a))
-  return alphabet[int % alphabet.length]
+function errorHandler (err, req, res, next) {
+  console.error("errorHandler", err)
+  res.status(500).send({ error: 'Something failed!' })
 }
 
-function readable(buffer) {
-  return Array.from(buffer).map(syllable).join("")
-}
-
-function checksum(text) {
-	const hmac = crypto.createHmac("sha256", salt)
-	hmac.update(text)
-  return readable(hmac.digest().slice(0, 4))
-}
-
-function generateToken(group, user) {
-  const payload = group + user
-  return payload + checksum(payload)
+function getClient(req) {
+  return req.headers['x-forwarded-for'] || req.connection.remoteAddress
 }
 
 app.use(function(req, res, next){
@@ -76,16 +56,21 @@ app.get("/", function (req, res) {
 	res.render("index", { title: "Studentské dotazníky" })
 })
 
-app.get("/ready", async function (req, res) {
+app.post("/", async function (req, res) {
+  res.cookie('token', req.body.token, { secure: true })
+  res.redirect(303, '/ready')
+})
+
+app.get('/ready', async function (req, res) {
   if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")
   } else {
     const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
-    res.render("nastaveni", { title: "Výběr předmětů", subjects })
+    res.render('ready', { title: "Výběr předmětů", subjects, current: 'ready' })
   }
 })
 
-app.post("/ready", async function (req, res) {
+app.post('/ready', async function (req, res) {
   if (req.group && req.user) {
     await db.chooseSubjects(req.group, req.user, req.body)
     res.redirect(303, "/steady")
@@ -94,42 +79,53 @@ app.post("/ready", async function (req, res) {
   }
 })
 
-app.get("/steady", async function (req, res) {
+app.get('/steady', async function (req, res) {
   const subjects = await db.chosenSubjects(req.group, req.user)
-  res.render("prehled", { title: "Přehled dotazníku", subjects })
+  res.render('steady', { title: "Přehled dotazníku", subjects, current: 'steady' })
 })
 
-app.post("/steady", async function (req, res) {
+app.post('/steady', async function (req, res) {
   res.redirect(303, "/go/1")
 })
 
-app.get("/go/:step", async function (req, res) {
+app.get('/go/:step', async function (req, res) {
   const step = Number(req.params.step)
   if (req.group && req.user && step) {
     const subjects = await db.chosenSubjects(req.group, req.user)
     const teacher = subjects[step - 1]
     if (teacher) {
       await db.fillQuestions(req.group, teacher)
-      res.render("formular", { title: teacher.teacherName, teacherSubjects: teacher.subjects, subjects })
-    } else {
-      res.render("konec", { title: "Konec dotazníku", subjects })
+      res.render('go', { title: teacher.teacherName, teacherSubjects: teacher.subjects, subjects, current: `go/${step}` })
     }
   } else {
     console.log("missing data:", req.group, req.user, step)
-    res.redirect(303, `/`)
+    res.redirect(303, '/')
   }
 })
 
-app.post("/go/:step", async function (req, res) {
+app.post('/go/:step', async function (req, res) {
   const step = Number(req.params.step)
-  const client = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-  await db.answer(req.group, req.user, step, client, req.body)
-  res.redirect(303, `/go/${step + 1}`)
+  await db.answer(req.group, req.user, step, getClient(req), req.body)
+  const subjects = await db.chosenSubjects(req.group, req.user)
+  if (step < subjects.length) {
+    res.redirect(303, `/go/${step + 1}`)
+  } else {
+    res.redirect(303, '/last')
+  }
 })
 
-app.post("/", async function (req, res) {
-  res.cookie('token', req.body.token, { secure: true })
-  res.redirect(303, '/ready')
+app.get('/last', async function (req, res) {
+  const questions = await db.lastQuestions()
+  res.render('last', { title: "Závěr dotazníku", questions, current: 'last' })
+})
+
+app.post('/last', async function (req, res) {
+  await db.lastAnswer(req.group, req.user, getClient(req), req.body)
+  res.redirect(303, '/done')
+})
+
+app.get('/done', async function (req, res) {
+  res.render('done', { title: "Konec dotazníku", current: 'done' })
 })
 
 app.get("/tokens.csv", async function (req, res) {

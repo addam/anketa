@@ -65,7 +65,8 @@ async chooseSubjects(gid, uid, body) {
   for await (const { rowid: sid } of db.each("SELECT rowid FROM subject WHERE optional = 1 AND class_id = ?", [gid])) {
     console.log(sid, `subject_${sid}`, body[`subject_${sid}`])
     if (body[`subject_${sid}`] == 1) {
-      await db.exec("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
+      // this run cannot be awaited because it does not return data. That actually sucks pretty bad.
+      db.run("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
     }
   }
 },
@@ -97,15 +98,35 @@ async fillQuestions(group, teacher) {
 
 async answer(group, user, step, client, content) {
   const time = new Date()
-  const regex = /^otazka_([0-9])_([0-9])?$/
+  const regex = /^otazka_([0-9]+)_([0-9]+)$/
   for (const key of Object.keys(content)) {
     const match = regex.exec(key)
     if (match === null) {
       continue
     }
-    const [_, tid, qid, isText] = match
+    const [_, tid, qid] = match
     const num = Number(content[key])
     const comment = (content[`${key}_text`] || "").replace(/\r?\n|\r/g, "//")
+    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, group, user, num, comment])
+    const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
+    await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
+  }
+},
+
+async lastQuestions() {
+  return await db.all("SELECT rowid id, question FROM question WHERE teacher_id = 'last'")
+},
+
+async lastAnswer(group, user, client, content) {
+  const time = new Date()
+  const regex = /^otazka_([0-9]+)$/
+  for (const key of Object.keys(content)) {
+    const match = regex.exec(key)
+    if (match === null) {
+      continue
+    }
+    const [_, qid] = match
+    const comment = (content[key] || "").replace(/\r?\n|\r/g, "//")
     const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, group, user, num, comment])
     const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})

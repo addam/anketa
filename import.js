@@ -27,6 +27,9 @@ async function ensureTeacher(name) {
 
 async function teacherId(name) {
   console.log("get teacher", name)
+  if (name == "last") {
+    return name
+  }
   return await db.getone("SELECT rowid FROM teacher WHERE name = ?", [name])
 }
 
