@@ -61,6 +61,11 @@ app.post("/", async function (req, res) {
   res.redirect(303, '/ready')
 })
 
+app.get('/s/:token', async function (req, res) {
+  res.cookie('token', req.params.token, { secure: true })
+  res.redirect(303, '/ready')
+}
+
 app.get('/ready', async function (req, res) {
   if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")

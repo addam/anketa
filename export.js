@@ -12,8 +12,10 @@ function enumerate(array) {
   return array.map((x, i) => [i, x])
 }
 
-function qr(text) {
-  return qrImage.imageSync(text, { type: 'svg' });
+async function qr(text, transform) {
+  const data = qrImage.imageSync(text, { type: 'svg', size: 10 });
+  const xml = await xml2js.parseStringPromise(data)
+  return {path: xml.svg.path[0], $: { transform }}
 }
 
 async function main() {
@@ -29,33 +31,36 @@ async function main() {
   const p1 = hb.compile(JSON.stringify(pages.pop()))
   const p2 = hb.compile(JSON.stringify(pages.pop()))
   for (const {syllable, name: trida} of await db.all("SELECT syllable, name FROM class")) {
-    const userCount = 12
+    const userCount = 29
     const testCount = 1
     const tokens = Array(userCount + testCount).fill().map((_, i) => i < testCount ? `x${i+1}` : getSyllable(i - testCount)).map(s => generateToken(syllable, s))
     for (const [i, token] of enumerate(tokens)) {
       if (i % 10 == 0) {
-        const j = i / 10
+        const j = pages.length
         const np = [JSON.parse(p1({ trida })), JSON.parse(p2({ trida }))]
-        np[0].$.id = np[0].$["inkscape:label"] = `page${2 * j}`
-        np[0].$.transform = `translate(0,${640 * j})`
-        np[1].$.id = np[1].$["inkscape:label"] = `page${2 * j + 1}`
-        np[1].$.transform = `translate(0,${640 * j + 320})`
+        np[0].$.id = np[0].$["inkscape:label"] = `page${j}`
+        np[0].$.transform = `translate(0,${320 * j})`
+        np[1].$.id = np[1].$["inkscape:label"] = `page${j + 1}`
+        np[1].$.transform = `translate(0,${320 * (j + 1)})`
         pages.unshift(...np)
-        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 640 * j}})
-        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 640 * j + 320}})
+        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * j}})
+        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * (j + 1)}})
       }
       const data = { stres: "stres.gymjs.cz", vyuka: "vyuka.gymjs.cz", syllable, token };
       const x = i % 2
       const y = Math.floor(i / 2) % 5
-      console.log(x, y)
       const d1 = JSON.parse(templ1(data));
       d1.$.transform = `translate(${21 + 85 * x},${11 + 55 * y})`
+      d1.g[2] = await qr(`https://${data.stres}/s/${syllable}`, "translate(49,17)")
       pages[0].g.push(d1)
       const d2 = JSON.parse(templ2(data));
+      if (token[2] == "x") {
+        d2.rect[0].$.style = "fill:#fcc;stroke-width:3;stroke:white;"
+      }
       d2.$.transform = `translate(${-6 - 85 * x},${-298 + 55 * y })`
+      d2.g[2] = await qr(`https://${data.vyuka}/s/${token}`, "translate(160,326)")
       pages[1].g.push(d2)
     }
-    break
   }
   data = builder.buildObject(xml);
   await fsp.writeFile("export.svg", data)

@@ -19,14 +19,14 @@
      inkscape:window-y="-1"
      inkscape:window-x="0"
      inkscape:document-rotation="0"
-     inkscape:current-layer="page1"
-     inkscape:cy="1782.6071"
-     inkscape:cx="131.31544"
-     inkscape:zoom="0.45691504"
+     inkscape:current-layer="g2359"
+     inkscape:cy="1415.1975"
+     inkscape:cx="202.71821"
+     inkscape:zoom="1.8276602"
      showgrid="false"
      id="namedview192"
-     inkscape:window-height="1024"
-     inkscape:window-width="1680"
+     inkscape:window-height="1054"
+     inkscape:window-width="1920"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0"
      guidetolerance="10"
@@ -278,18 +278,20 @@
       </g>
       <text
          id="text1351-1"
-         y="342.97968"
-         x="115.54467"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.30907px;line-height:1.25;font-family:'Open Sans';-inkscape-font-specification:'Open Sans';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16927;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         y="343.27292"
+         x="115.57161"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.4046px;line-height:1.25;font-family:'Open Sans';-inkscape-font-specification:'Open Sans';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16927;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          xml:space="preserve"><tspan
            sodipodi:role="line"
            id="tspan867"
-           x="115.54467"
-           y="342.97968">{{vyuka}}</tspan><tspan
+           x="115.57161"
+           y="343.27292"
+           style="stroke-width:0.16927">{{vyuka}}</tspan><tspan
            sodipodi:role="line"
            id="tspan869"
-           x="115.54467"
-           y="349.61603">kód: {{token}}</tspan></text>
+           x="115.57161"
+           y="348.77866"
+           style="stroke-width:0.16927">kód: {{token}}</tspan></text>
       <text
          xml:space="preserve"
          id="text1700-2"
@@ -334,7 +336,7 @@
       </g>
       <g
          inkscape:label="QR Code: https://vyuka.gymjs.cz/s/pix1zitaraje"
-         transform="matrix(0.22663705,0,0,0.22663705,159.08383,325.65685)"
+         transform="matrix(0.22663705,0,0,0.22663705,158.35249,325.65685)"
          id="g977"
          style="display:inline;stroke-width:1.16743">
         <rect
@@ -356,7 +358,7 @@
       <text
          id="text734-0"
          y="360.13617"
-         x="175.79555"
+         x="175.06421"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:'Open Sans';-inkscape-font-specification:'Open Sans';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16927;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          xml:space="preserve">https://{{vyuka}}/s/{{token}}</text>
     </g>
