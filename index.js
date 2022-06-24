@@ -64,14 +64,14 @@ app.post("/", async function (req, res) {
 app.get('/s/:token', async function (req, res) {
   res.cookie('token', req.params.token, { secure: true })
   res.redirect(303, '/ready')
-}
+})
 
 app.get('/ready', async function (req, res) {
   if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")
   } else {
-    const subjects = (await db.listSubjects(req.group)).filter(it => it.optional)
-    res.render('ready', { title: "Výběr předmětů", subjects, current: 'ready' })
+    const subjectOptions = (await db.listSubjects(req.group)).filter(it => it.optional)
+    res.render('ready', { title: "Výběr předmětů", subjectOptions, current: 'ready' })
   }
 })
 

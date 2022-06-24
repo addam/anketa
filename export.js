@@ -46,19 +46,19 @@ async function main() {
         pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * j}})
         pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * (j + 1)}})
       }
-      const data = { stres: "stres.gymjs.cz", vyuka: "vyuka.gymjs.cz", syllable, token };
+      const data = { stres: "s-gjs.jdem.cz", stresLong: "stres.dominec.eu", vyuka: "v-gjs.jdem.cz", vyukaLong: "vyuka.dominec.eu", syllable, token };
       const x = i % 2
       const y = Math.floor(i / 2) % 5
       const d1 = JSON.parse(templ1(data));
       d1.$.transform = `translate(${21 + 85 * x},${11 + 55 * y})`
-      d1.g[2] = await qr(`https://${data.stres}/s/${syllable}`, "translate(49,17)")
+      d1.g[2] = await qr(`https://${data.stresLong}/s/${syllable}`, "translate(49,17)")
       pages[0].g.push(d1)
       const d2 = JSON.parse(templ2(data));
       if (token[2] == "x") {
         d2.rect[0].$.style = "fill:#fcc;stroke-width:3;stroke:white;"
       }
       d2.$.transform = `translate(${-6 - 85 * x},${-298 + 55 * y })`
-      d2.g[2] = await qr(`https://${data.vyuka}/s/${token}`, "translate(160,326)")
+      d2.g[2] = await qr(`https://${data.vyukaLong}/s/${token}`, "translate(160,326)")
       pages[1].g.push(d2)
     }
   }

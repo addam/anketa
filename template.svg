@@ -20,9 +20,9 @@
      inkscape:window-x="0"
      inkscape:document-rotation="0"
      inkscape:current-layer="g2359"
-     inkscape:cy="1415.1975"
-     inkscape:cx="202.71821"
-     inkscape:zoom="1.8276602"
+     inkscape:cy="1424.1371"
+     inkscape:cx="302.9507"
+     inkscape:zoom="6.5109603"
      showgrid="false"
      id="namedview192"
      inkscape:window-height="1054"
@@ -357,10 +357,10 @@
       </g>
       <text
          id="text734-0"
-         y="360.13617"
-         x="175.06421"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:'Open Sans';-inkscape-font-specification:'Open Sans';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16927;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-         xml:space="preserve">https://{{vyuka}}/s/{{token}}</text>
+         y="360.08035"
+         x="175.07024"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.90182px;line-height:1.25;font-family:'Open Sans';-inkscape-font-specification:'Open Sans';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.16927;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         xml:space="preserve">https://{{vyukaLong}}/s/{{token}}</text>
     </g>
   </g>
   <g
@@ -576,7 +576,7 @@ otázky v dotazníku:
            sodipodi:role="line"
            id="tspan1387"
            x="64.551743"
-           y="52.241405">https://{{stres}}/s/{{syllable}}</tspan></text>
+           y="52.241405">https://{{stresLong}}/s/{{syllable}}</tspan></text>
     </g>
   </g>
 </svg>

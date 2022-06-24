@@ -1,7 +1,7 @@
 <form method=post>
 <p>Vyberte, které z dělených a volitelných předmětů budete hodnotit:</p>
 <div class="label-list">
-  {{#each subjects}}
+  {{#each subjectOptions}}
   <label><input type=checkbox name=subject_{{id}} value=1>{{subjectName}}, {{teacherName}}</label>
   {{/each}}
 </div>

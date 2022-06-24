@@ -127,8 +127,8 @@ async lastAnswer(group, user, client, content) {
     }
     const [_, qid] = match
     const comment = (content[key] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, group, user, num, comment])
-    const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
+    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES ('last', ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [qid, group, user, comment])
+    const log = [rowid, time.toJSON(), client, group, user, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
 },
