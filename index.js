@@ -70,7 +70,7 @@ app.get('/ready', async function (req, res) {
   if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")
   } else {
-    const subjectOptions = (await db.listSubjects(req.group)).filter(it => it.optional)
+    const subjectOptions = await db.listOptionalSubjects(req.group, req.user)
     res.render('ready', { title: "Výběr předmětů", subjectOptions, current: 'ready' })
   }
 })
@@ -99,8 +99,8 @@ app.get('/go/:step', async function (req, res) {
     const subjects = await db.chosenSubjects(req.group, req.user)
     const teacher = subjects[step - 1]
     if (teacher) {
-      await db.fillQuestions(req.group, teacher)
-      res.render('go', { title: teacher.teacherName, teacherSubjects: teacher.subjects, subjects, current: `go/${step}` })
+      await db.fillQuestions(req.group, req.user, teacher)
+      res.render('go', { title: teacher.teacherName, teacher, subjects, current: `go/${step}` })
     }
   } else {
     console.log("missing data:", req.group, req.user, step)
@@ -120,8 +120,9 @@ app.post('/go/:step', async function (req, res) {
 })
 
 app.get('/last', async function (req, res) {
-  const questions = await db.lastQuestions()
-  res.render('last', { title: "Závěr dotazníku", questions, current: 'last' })
+  const questions = await db.lastQuestions(req.group, req.user)
+  const subjects = await db.chosenSubjects(req.group, req.user)
+  res.render('last', { title: "Závěr dotazníku", questions, subjects, current: 'last' })
 })
 
 app.post('/last', async function (req, res) {

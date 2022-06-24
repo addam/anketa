@@ -51,19 +51,23 @@ async listClasses() {
   return await db.all("SELECT name, syllable FROM class")
 },
 
-async listSubjects(gid) {
-  return await db.all(`SELECT subject.rowid id, teacher.name teacherName, subject.name subjectName, subject.optional
+async listOptionalSubjects(gid, uid) {
+  const result = await db.all(`SELECT subject.rowid id, teacher.name teacherName, subject.name subjectName
     FROM subject
     JOIN teacher ON teacher.rowid = subject.teacher_id
     WHERE subject.class_id = ?
+    AND subject.optional > 0
     ORDER BY subjectName, teacherName`, [gid])
+  const choice = new Set(await db.allone("SELECT subject_id id FROM subject_choice WHERE user_id = ?", [uid]))
+  for (const subject of result) {
+    subject.selected = choice.has(subject.id)
+  }
+  return result
 },
 
 async chooseSubjects(gid, uid, body) {
   await db.run("DELETE FROM subject_choice WHERE class_id = ? and user_id = ?", [gid, uid])
-  console.log(gid, uid, body)
   for await (const { rowid: sid } of db.each("SELECT rowid FROM subject WHERE optional = 1 AND class_id = ?", [gid])) {
-    console.log(sid, `subject_${sid}`, body[`subject_${sid}`])
     if (body[`subject_${sid}`] == 1) {
       // this run cannot be awaited because it does not return data. That actually sucks pretty bad.
       db.run("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
@@ -84,37 +88,53 @@ async chosenSubjects(gid, uid) {
   return result
 },
 
-async fillQuestions(group, teacher) {
+async fillQuestions(group, user, teacher) {
     if (!teacher) {
       return null
     }
+    const tid = teacher.teacherId
     for (const sub of teacher.subjects) {
-      sub.questions = await db.all(`SELECT rowid id, question FROM question
-        WHERE (teacher_id = ? OR teacher_id IS null)
-        AND (class_id = ? OR class_id IS null)`, [teacher.teacherId, group])
+      sub.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
+        FROM question q
+        LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.subject_id = ?
+        WHERE (q.teacher_id = ? OR q.teacher_id IS null)
+        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, tid, group])
     }
+    teacher.comment = await db.getone(`SELECT a.comment
+    FROM answer a 
+    JOIN subject s on s.rowid = a.subject_id
+    WHERE a.question_id IS NULL
+    AND s.teacher_id = ?`, [tid])
     return teacher
 },
 
 async answer(group, user, step, client, content) {
   const time = new Date()
   const regex = /^otazka_([0-9]+)_([0-9]+)$/
+  let subjectId
   for (const key of Object.keys(content)) {
     const match = regex.exec(key)
     if (match === null) {
       continue
     }
-    const [_, tid, qid] = match
+    const [_, sid, qid] = match
     const num = Number(content[key])
     const comment = (content[`${key}_text`] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [tid, qid, group, user, num, comment])
+    const rowid = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [Number(sid), Number(qid), group, user, num, comment])
+    subjectId = Number(sid)
     const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
+  if (subjectId && content.comment) {
+    const rowid = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, null, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [subjectId, group, user, content.comment])
+  }
 },
 
-async lastQuestions() {
-  return await db.all("SELECT rowid id, question FROM question WHERE teacher_id = 'last'")
+async lastQuestions(group, user) {
+  return await db.all(`SELECT q.rowid id, q.question, a.comment
+  FROM question q
+  LEFT JOIN answer a ON a.question_id = q.rowid AND a.class_id = ? AND a.user_id = ?
+  WHERE q.teacher_id = 'last'`, [group, user])
 },
 
 async lastAnswer(group, user, client, content) {
@@ -127,7 +147,7 @@ async lastAnswer(group, user, client, content) {
     }
     const [_, qid] = match
     const comment = (content[key] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.get("REPLACE INTO answer (teacher_id, question_id, class_id, user_id, answer, comment, date) VALUES ('last', ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [qid, group, user, comment])
+    const rowid = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES ('last', ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [qid, group, user, comment])
     const log = [rowid, time.toJSON(), client, group, user, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }

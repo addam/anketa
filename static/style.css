@@ -66,10 +66,11 @@ textarea {
 textarea, input, button, select {
   border: 1px solid var(--border);
 }
-button, select {
+button, select, a.secondary {
   padding: 0.5em 1em;
   margin: 0.5em;
   border-radius: 0.5em;
+  font-size: 0.9rem;
   font-weight: bold;
   transition: background 0.2s;
 }
@@ -81,11 +82,14 @@ button {
 button:hover {
   background: #37d;
 }
-button.secondary, select {
+a.secondary {
+  
+}
+.secondary, select {
   background: var(--bg-b);
   color: var(--fg-b);
   border: 1px solid var(--border);
 }
-button.secondary:hover, select:hover {
+.secondary:hover, select:hover {
   background: #ddd;
 }
