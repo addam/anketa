@@ -67,7 +67,9 @@ app.get('/s/:token', async function (req, res) {
 })
 
 app.get('/ready', async function (req, res) {
-  if (req.group == "xy") {
+  if (!req.group || !req.user) {
+    res.redirect(303, "/")
+  } else if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")
   } else {
     const subjectOptions = await db.listOptionalSubjects(req.group, req.user)
@@ -110,6 +112,10 @@ app.get('/go/:step', async function (req, res) {
 
 app.post('/go/:step', async function (req, res) {
   const step = Number(req.params.step)
+  if (!req.group || !req.user) {
+    res.redirect(303, `/go/${step}`)
+    return
+  }
   await db.answer(req.group, req.user, step, getClient(req), req.body)
   const subjects = await db.chosenSubjects(req.group, req.user)
   if (step < subjects.length) {
@@ -139,7 +145,8 @@ app.get("/tokens.csv", async function (req, res) {
     if (req.user === shem) {
       const tridy = await db.listClasses()
       console.log(tridy)
-      const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(shem, syllable))
+      //const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(shem, syllable))
+      const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(syllable, "x3"))
       res.attachment("tokens-admin.csv");
       res.send(data.join("\r\n"))
     } else {

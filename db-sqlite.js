@@ -96,15 +96,16 @@ async fillQuestions(group, user, teacher) {
     for (const sub of teacher.subjects) {
       sub.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
         FROM question q
-        LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.subject_id = ?
+        LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.subject_id = ? AND a.class_id = ?
         WHERE (q.teacher_id = ? OR q.teacher_id IS null)
-        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, tid, group])
+        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, group, tid, group])
     }
     teacher.comment = await db.getone(`SELECT a.comment
     FROM answer a 
     JOIN subject s on s.rowid = a.subject_id
-    WHERE a.question_id IS NULL
-    AND s.teacher_id = ?`, [tid])
+    WHERE a.question_id IS NULL 
+    AND a.class_id = ? AND a.user_id = ?
+    AND s.teacher_id = ?`, [group, user, tid])
     return teacher
 },
 
