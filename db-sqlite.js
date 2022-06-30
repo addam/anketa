@@ -92,7 +92,7 @@ async fillQuestions(group, user, teacher) {
     if (!teacher) {
       return null
     }
-    const tid = teacher.teacherId
+    const tid = Number(teacher.teacherId)
     for (const sub of teacher.subjects) {
       sub.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
         FROM question q
