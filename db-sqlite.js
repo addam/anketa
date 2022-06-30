@@ -88,6 +88,11 @@ async chosenSubjects(gid, uid) {
   return result
 },
 
+async isFilledEarly(group, user, time) {
+  const count = await db.getone(`SELECT count(*) FROM answer WHERE class_id = ? AND user_id = ? AND date <= ?`, [group, user, time])
+  return count
+},
+
 async fillQuestions(group, user, teacher) {
     if (!teacher) {
       return null
