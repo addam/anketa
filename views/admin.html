@@ -1,0 +1,77 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<style>
+h2, h3, canvas {
+  padding-left: 1em;
+}
+</style>
+<script>
+function cel(name, parameters={}) {
+  const element = document.createElement(name);
+  for (const param in parameters) {
+    if (param === "class") {
+      for (const cls of parameters[param].split(" ")) {
+        element.classList.add(cls);
+      }
+    } else {
+      element[param] = parameters[param];
+    }
+  }
+  return element;
+}
+
+const palette = " #ce5c00 #8ae234 #729fcf #fcaf3e #ad7fa8 #fce94f #a40000 #204a87 #5c3566 #4e9a06 #ef2929".split(" ")
+const colors = {}
+
+function getColor(index, colors) {
+  let result = colors[index]
+  rnd = () => Math.floor(Math.random() * 256)
+  if (!result) {
+    result = palette.pop() || `rgb(${rnd()}, ${rnd()}, ${rnd()})`
+    colors[index] = result
+  }
+  return result
+}
+
+function addChart(data) {
+  const canvas = cel("canvas", { style: "width:100%;max-width:700px" })
+  document.body.appendChild(canvas)
+  const datasets = Object.entries(data).map(([cls, cData]) => ({
+    label: cls,
+    backgroundColor: getColor(cls, colors),
+    data: Object.values(cData)
+  })).sort((a, b) => a.label > b.label)
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: Array(11).fill().map((x, i) => i),
+      datasets
+    },
+    options: {
+      scales: {
+        y: {
+          min: 0,
+        }
+      }
+    }
+  });
+}
+</script>
+<a href="/tokens.csv">Kódy pro testování dotazníků</a><br>
+<a href="/results.xlsx">Všechny výsledky v tabulce</a><br>
+{{#each data as |tData teacher|}}
+<h1>{{#if (eq teacher 'null')}}Celkové komentáře{{else}}{{teacher}}{{/if}}</h1>
+{{#each tData as |sData subject|}}
+{{#if (eq teacher 'null')}}{{else}}<h2>{{subject}}</h2>{{/if}}
+{{#each sData as |cData class|}}
+<h3>Komentáře z třídy {{class}}</h3>
+{{#each cData as |qData question|}}
+<h4>{{#if (eq question 'null')}}Osobní komentář{{else}}{{question}}{{/if}}</h4>
+<ul>
+{{#each qData as |comment|}}
+<li>{{comment}}</li>
+{{/each}}
+</ul>
+{{/each}}
+{{/each}}
+{{/each}}
+{{/each}}

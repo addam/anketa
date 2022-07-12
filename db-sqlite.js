@@ -38,8 +38,13 @@ function setdefault(map, index, ...args) {
     }
     setdefault(inner, ...args)
   } else {
+    let list = map[index]
+    if (list === undefined) {
+      list = []
+      map[index] = list
+    }
     if (args[0] != "null") {
-      map[index] = args[0]
+      list.push(args[0])
     }
   }
 }
@@ -212,30 +217,17 @@ async answersGrouped(grouping) {
 },
 
 async summarize(fromDate) {
-  const data = await db.all(`SELECT subject.name subj, answer.class_id, question.question ques, answer, count(*) cnt
+  const comments = await db.all(`SELECT subject.name s, class.name c, question.question q, teacher.name t, comment
   FROM answer
   LEFT JOIN subject ON subject_id = subject.rowid
+  LEFT JOIN class ON answer.class_id = class.syllable
+  LEFT JOIN teacher ON subject.teacher_id = teacher.rowid
   LEFT JOIN question ON question_id = question.rowid
-  WHERE date > ?
-  GROUP BY subj, ques, answer.class_id, answer`, [fromDate])
-  const result = {}
-  for (const {subj, ques, class_id, answer, cnt} of data) {
-    setdefault(result, subj, ques, class_id, answer, cnt)
-  }
-  const comments = await db.all(`SELECT subject.name subj, answer.class_id, question.question ques, comment
-  FROM answer
-  LEFT JOIN subject ON subject_id = subject.rowid
-  LEFT JOIN question ON question_id = question.rowid
-  WHERE date > ?`, [fromDate])
-  for (const {subj, ques, class_id, comment} of comments) {
+  WHERE substr(user_id, 1, 1) != 'x'`)
+  result = {}
+  for (const {t, s, c, q, comment} of comments) {
     if (comment != "") {
-      const cData = result[subj][ques][class_id]
-      let list = cData.comments
-      if (!list) {
-        list = []
-        cData.comments = list
-      }
-      list.push(comment)
+      setdefault(result, t, s, c, q, comment)
     }
   }
   return result
