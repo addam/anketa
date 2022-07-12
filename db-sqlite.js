@@ -29,6 +29,37 @@ function groupByTeacher(subjects) {
   return Object.entries(groups).map(([teacherId, subjects]) => ({ teacherId, subjects, teacherName: subjects[0].teacherName }))
 }
 
+function setdefault(map, index, ...args) {
+  if (args.length > 1) {
+    let inner = map[index]
+    if (!inner) {
+      inner = {}
+      map[index] = inner
+    }
+    setdefault(inner, ...args)
+  } else {
+    if (args[0] != "null") {
+      map[index] = args[0]
+    }
+  }
+}
+
+function getDefault(map, key, type=Map) {
+  return map.get(key) || (map.set(key, new type()).get(key))
+}
+
+function getDefaultMap(map, ...keys) {
+  let result = map
+  for (const key of keys) {
+    result = getDefault(result, key)
+  }
+  return result
+}
+
+function getKeys(map, keys) {
+  return [...keys].map(it => map[it])
+}
+
 init()
 module.exports = {
 
@@ -159,5 +190,55 @@ async lastAnswer(group, user, client, content) {
   }
 },
 
+async answersGrouped(grouping) {
+  const data = await db.all(`SELECT teacher.name t, subject.name s, class.name c, question.question q, avg(answer) avg, count(answer) count
+  FROM answer
+  JOIN subject ON subject.rowid = answer.subject_id
+  JOIN class ON class.syllable = answer.class_id
+  JOIN teacher ON teacher.rowid = subject.teacher_id
+  JOIN question ON question.rowid = answer.question_id
+  WHERE substr(user_id, 1, 1) != 'x'
+  GROUP BY ${[...grouping]}
+  `)
+  const result = new Map()
+  for (const row of data) {
+    const sub = getDefaultMap(result, ...getKeys(row, grouping))
+    sub.set("avg", row.avg)
+    sub.set("count", row.count)
+  }
+  return result
+  //"tsc"->
+  //{"Adam Dominec": {"Informatika a komunikační technika": {"4.": {"Její/jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.": 3.14, ...}, {"5.": {...}}}, "Programování - seminář": {...}}, "Alan Orr": {...}, ...}
+},
+
+async summarize(fromDate) {
+  const data = await db.all(`SELECT subject.name subj, answer.class_id, question.question ques, answer, count(*) cnt
+  FROM answer
+  LEFT JOIN subject ON subject_id = subject.rowid
+  LEFT JOIN question ON question_id = question.rowid
+  WHERE date > ?
+  GROUP BY subj, ques, answer.class_id, answer`, [fromDate])
+  const result = {}
+  for (const {subj, ques, class_id, answer, cnt} of data) {
+    setdefault(result, subj, ques, class_id, answer, cnt)
+  }
+  const comments = await db.all(`SELECT subject.name subj, answer.class_id, question.question ques, comment
+  FROM answer
+  LEFT JOIN subject ON subject_id = subject.rowid
+  LEFT JOIN question ON question_id = question.rowid
+  WHERE date > ?`, [fromDate])
+  for (const {subj, ques, class_id, comment} of comments) {
+    if (comment != "") {
+      const cData = result[subj][ques][class_id]
+      let list = cData.comments
+      if (!list) {
+        list = []
+        cData.comments = list
+      }
+      list.push(comment)
+    }
+  }
+  return result
+}
 }
 

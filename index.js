@@ -5,6 +5,7 @@ const handlebars = require("express-handlebars")
 const url = require("url")
 const db = require("./db-sqlite")
 const { checksum, generateToken } = require("./token")
+const results = require("./results")
 
 var app = express()
 app.engine("html", handlebars({
@@ -14,6 +15,7 @@ app.engine("html", handlebars({
     inc: (num) => (num + 1),
     eq: (a, b) => (a == b),
     add: (...args) => (args.slice(0, args.length - 1).reduce((a, b) => a+b)),
+    stringify: (data) => (JSON.stringify(data)),
   }
 }))
 app.set("view engine", "html")
@@ -56,14 +58,24 @@ app.get("/", function (req, res) {
 	res.render("index", { title: "Studentské dotazníky" })
 })
 
-app.post("/", async function (req, res) {
-  res.cookie('token', req.body.token, { secure: true })
-  res.redirect(303, '/ready')
-})
+async function login(req, res) {
+  res.cookie('token', (req.body.token || req.cookies.token || ""), { secure: true })
+  if (req.group == shem && req.user == shem) {
+    res.redirect(303, '/admin')
+  } else {
+    res.redirect(303, '/ready')
+  }
+}
+app.post("/", login)
+app.get('/s/:token', login)
 
-app.get('/s/:token', async function (req, res) {
-  res.cookie('token', req.params.token, { secure: true })
-  res.redirect(303, '/ready')
+app.get('/admin', async function (req, res) {
+  if (req.group == shem && req.user == shem) {
+    const data = await db.summarize('2022-06-27 08:00:00')
+    res.render('admin', { title: "Výsledky dotazníku", data })
+  } else {
+    res.redirect(403, '/')
+  }
 })
 
 app.get('/ready', async function (req, res) {
@@ -127,14 +139,22 @@ app.post('/go/:step', async function (req, res) {
 })
 
 app.get('/last', async function (req, res) {
-  const questions = await db.lastQuestions(req.group, req.user)
-  const subjects = await db.chosenSubjects(req.group, req.user)
-  res.render('last', { title: "Závěr dotazníku", questions, subjects, current: 'last' })
+  if (req.group && req.user) {
+    const questions = await db.lastQuestions(req.group, req.user)
+    const subjects = await db.chosenSubjects(req.group, req.user)
+    res.render('last', { title: "Závěr dotazníku", questions, subjects, current: 'last' })
+  } else {
+    res.redirect(303, '/')
+  }
 })
 
 app.post('/last', async function (req, res) {
-  await db.lastAnswer(req.group, req.user, getClient(req), req.body)
-  res.redirect(303, '/done')
+  if (req.group && req.user) {
+    await db.lastAnswer(req.group, req.user, getClient(req), req.body)
+    res.redirect(303, '/done')
+  } else {
+    res.redirect(303, '/')
+  }
 })
 
 app.get('/done', async function (req, res) {
@@ -161,6 +181,14 @@ app.get("/tokens.csv", async function (req, res) {
   } else if (req.group !== undefined) {
   } else {
     res.render("index", { title: "Studentské dotazníky", invalidToken: req.body.token })
+  }
+})
+
+app.get("/results.xlsx", async function (req, res) {
+  if (req.group == shem && req.user == shem) {
+    results(req, res, db)
+  } else {
+    res.redirect(403, '/')
   }
 })
 
