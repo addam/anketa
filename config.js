@@ -1,3 +1,3 @@
 module.exports = {
-  salt: "V5d4y2HfScSz5o7X"
+  salt: "Ginn86kxfJhHSwSj"
 }

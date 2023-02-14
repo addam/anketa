@@ -100,8 +100,7 @@ app.post('/ready', async function (req, res) {
 
 app.get('/steady', async function (req, res) {
   const subjects = await db.chosenSubjects(req.group, req.user)
-  const filledEarly = (await db.isFilledEarly(req.group, req.user, "2022-06-30 08:47:51")) ? "true" : ""
-  res.render('steady', { title: "Přehled dotazníku", subjects, current: 'steady', filledEarly })
+  res.render('steady', { title: "Přehled dotazníku", subjects, current: 'steady' })
 })
 
 app.post('/steady', async function (req, res) {

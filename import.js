@@ -43,7 +43,7 @@ function getSubject(detail) {
 }
 
 function getTeacher(detail) {
-  const regex = /^(?:(?:Bc|Ing\. arch|Ing|MgA|Mgr\. et Mgr|Mgr\.Bc|Mgr|PaedDr|RNDr)[. ]+)?(.+?)(?: Ph\.D\.| PhD\.)?$/
+  const regex = /^(?:(?:Bc|Ing\. arch|Ing|MgA|Mgr\. et Mgr|Mgr\.Bc|Mgr|PaedDr|RNDr|DiS)[. ]+)?(.+?)(?: Ph\.D\.| PhD\.)?$/
   return regex.exec(detail.teacher.split(",")[0])[1]
 }
 
