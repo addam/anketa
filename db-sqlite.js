@@ -138,15 +138,20 @@ async fillQuestions(group, user, teacher) {
       sub.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
         FROM question q
         LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.subject_id = ? AND a.class_id = ?
-        WHERE (q.teacher_id = ? OR q.teacher_id IS null)
-        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, group, tid, group])
+        WHERE q.teacher_id IS null
+        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, group, group])
     }
     teacher.comment = await db.getone(`SELECT a.comment
-    FROM answer a 
-    JOIN subject s on s.rowid = a.subject_id
-    WHERE a.question_id IS NULL 
-    AND a.class_id = ? AND a.user_id = ?
-    AND s.teacher_id = ?`, [group, user, tid])
+      FROM answer a 
+      JOIN subject s on s.rowid = a.subject_id
+      WHERE a.question_id IS NULL 
+      AND a.class_id = ? AND a.user_id = ?
+      AND s.teacher_id = ?`, [group, user, tid])
+    teacher.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
+      FROM question q
+      LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.class_id = ?
+      WHERE q.teacher_id = ?
+      AND (q.class_id = ? OR q.class_id IS null)`, [user, group, tid, group])
     return teacher
 },
 
@@ -162,24 +167,29 @@ async answer(group, user, step, client, content) {
     const [_, sid, qid] = match
     const num = Number(content[key])
     const comment = (content[`${key}_text`] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [Number(sid), Number(qid), group, user, num, comment])
-    subjectId = Number(sid)
+    // basic questions are stored with correct keys: subject_id, question_id
+    // custom questions are stored: subject_id = 0, question_id links to the teacher
+    const { rowid } = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [Number(sid), Number(qid), group, user, num, comment])
+    subjectId = subjectId || Number(sid)
     const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
+  // teacher comment is stored: subject_id = (first subject teached), question_id = null
   if (subjectId && content.comment) {
-    const rowid = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, null, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [subjectId, group, user, content.comment])
+    const { rowid } = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, null, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [subjectId, group, user, content.comment])
+    const log = [rowid, time.toJSON(), client, group, user, step, content.comment]
+    await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
 },
 
-async lastQuestions(group, user) {
+async generalQuestions(group, user, teacherId) {
   return await db.all(`SELECT q.rowid id, q.question, a.comment
   FROM question q
   LEFT JOIN answer a ON a.question_id = q.rowid AND a.class_id = ? AND a.user_id = ?
-  WHERE q.teacher_id = 'last'`, [group, user])
+  WHERE q.teacher_id = ?`, [group, user, teacherId])
 },
 
-async lastAnswer(group, user, client, content) {
+async generalAnswer(group, user, teacherId, client, content) {
   const time = new Date()
   const regex = /^otazka_([0-9]+)$/
   for (const key of Object.keys(content)) {
@@ -189,7 +199,7 @@ async lastAnswer(group, user, client, content) {
     }
     const [_, qid] = match
     const comment = (content[key] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.getone("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES ('last', ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [qid, group, user, comment])
+    const rowid = await db.getone("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [teacherId, qid, group, user, comment])
     const log = [rowid, time.toJSON(), client, group, user, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }

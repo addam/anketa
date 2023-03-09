@@ -43,7 +43,7 @@ function getClient(req) {
 }
 
 app.use(function(req, res, next){
-  const token = (req.body.token || req.cookies.token || "").toLowerCase()
+  const token = (req.params.token || req.body.token || req.cookies.token || "").toLowerCase()
   if (token && token.length > 4) {
     const [payload, check] = [token.slice(0, 4), token.slice(4)]
     if (check === checksum(payload)) {
@@ -59,7 +59,7 @@ app.get("/", function (req, res) {
 })
 
 async function login(req, res) {
-  res.cookie('token', (req.body.token || req.cookies.token || ""), { secure: true })
+  res.cookie('token', (req.params.token || req.body.token || req.cookies.token || ""), { secure: true })
   if (req.group == shem && req.user == shem) {
     res.redirect(303, '/admin')
   } else {
@@ -71,7 +71,7 @@ app.get('/s/:token', login)
 
 app.get('/admin', async function (req, res) {
   if (req.group == shem && req.user == shem) {
-    const data = await db.summarize('2022-06-27 08:00:00')
+    const data = await db.summarize('2023-02-13 08:00:00')
     res.render('admin', { title: "Výsledky dotazníku", data })
   } else {
     res.redirect(403, '/')
@@ -104,7 +104,26 @@ app.get('/steady', async function (req, res) {
 })
 
 app.post('/steady', async function (req, res) {
-  res.redirect(303, "/go/1")
+  res.redirect(303, "/first")
+})
+
+app.get('/first', async function (req, res) {
+  if (req.group && req.user) {
+    const questions = await db.generalQuestions(req.group, req.user, 'first')
+    const subjects = await db.chosenSubjects(req.group, req.user)
+    res.render('first', { title: "Úvod dotazníku", questions, subjects, current: 'first' })
+  } else {
+    res.redirect(303, '/')
+  }
+})
+
+app.post('/first', async function (req, res) {
+  if (req.group && req.user) {
+    await db.generalAnswer(req.group, req.user, 'first', getClient(req), req.body)
+    res.redirect(303, '/go/1')
+  } else {
+    res.redirect(303, '/')
+  }
 })
 
 app.get('/go/:step', async function (req, res) {
@@ -139,7 +158,7 @@ app.post('/go/:step', async function (req, res) {
 
 app.get('/last', async function (req, res) {
   if (req.group && req.user) {
-    const questions = await db.lastQuestions(req.group, req.user)
+    const questions = await db.generalQuestions(req.group, req.user, 'last')
     const subjects = await db.chosenSubjects(req.group, req.user)
     res.render('last', { title: "Závěr dotazníku", questions, subjects, current: 'last' })
   } else {
@@ -149,7 +168,7 @@ app.get('/last', async function (req, res) {
 
 app.post('/last', async function (req, res) {
   if (req.group && req.user) {
-    await db.lastAnswer(req.group, req.user, getClient(req), req.body)
+    await db.generalAnswer(req.group, req.user, 'last', getClient(req), req.body)
     res.redirect(303, '/done')
   } else {
     res.redirect(303, '/')

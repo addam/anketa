@@ -12,6 +12,36 @@ async function *fileWriter(filename) {
   await fd.close()
 }
 
+function keysort(array, ...keys) {
+  array.sort((a, b) => {
+    for (const k of keys) {
+      if (a[k] < b[k]) {
+        return -1
+      } else if (a[k] > b[k]) {
+        return 1
+      }
+    }
+    return 0
+  })
+  return array
+}
+
+function splitKeySort(array, separator, ...keys) {
+  array.sort((as, bs) => {
+    const a = as.split(separator)
+    const b = bs.split(separator)
+    for (const k of keys) {
+      if (a[k] < b[k]) {
+        return -1
+      } else if (a[k] > b[k]) {
+        return 1
+      }
+    }
+    return 0
+  })
+  return array
+}
+
 async function fetchHtml(url) {
   const response = await got(url)
   const dom = new JsDom(response.body)
@@ -59,7 +89,9 @@ async function writePeople(filename) {
     }
   }
   for await (const fd of fileWriter(filename)) {
-    fd.write([...result].join("\n"))
+    const sorted = splitKeySort([...result], ",", 0, 2)
+    console.log(sorted.slice(0, 10))
+    fd.write(sorted.join("\n"))
   }
 }
 
@@ -109,7 +141,7 @@ async function ensureSubject(cname, teacher, subject, optional) {
 
 async function importPeople(filename) {
   const fd = await fsp.open(filename)
-  const parser = fd.createReadStream().pipe(parseCsv())
+  const parser = fd.createReadStream().pipe(parseCsv({ relax_column_count: true }))
   for await (const record of parser) {
     await ensureSubject(...record)
   }

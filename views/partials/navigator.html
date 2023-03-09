@@ -4,10 +4,11 @@
 <select onchange="window.location = event.target.value">
   {{>option value="ready" text="Výběr předmětů"}}
   {{>option value="steady" text="Přehled dotazníku"}}
-{{#each subjects}}
-  {{>option value=(add "go/" (inc @index)) text=(add teacherName " " (inc @index) "/" ../subjects.length)}}
-{{/each}}
 {{#if subjects}}
+  {{>option value="first" text="Úvodní otázky"}}
+  {{#each subjects}}
+    {{>option value=(add "go/" (inc @index)) text=(add teacherName " " (inc @index) "/" ../subjects.length)}}
+  {{/each}}
   {{>option value="last" text="Závěr dotazníku"}}
 {{/if}}
 </select>

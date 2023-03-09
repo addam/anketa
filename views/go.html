@@ -14,6 +14,21 @@
   </div>
   {{/each}}
 {{/each}}
+{{#if teacher.questions}}
+<h2>Další otázky</h2>
+  {{#each teacher.questions}}
+    <h3>&bdquo;{{question}}&ldquo;</h3>
+    <div class="question">
+        <label>Zcela souhlasím <input type="radio" name="otazka_0_{{id}}" value="1" required{{#if (eq answer 1)}} checked{{/if}}>1</label>
+        <label><input type="radio" name="otazka_0_{{id}}" value="2"{{#if (eq answer 2)}} checked{{/if}}>2</label>
+        <label><input type="radio" name="otazka_0_{{id}}" value="3"{{#if (eq answer 3)}} checked{{/if}}>3</label>
+        <label><input type="radio" name="otazka_0_{{id}}" value="4"{{#if (eq answer 4)}} checked{{/if}}>4</label>
+        <label><input type="radio" name="otazka_0_{{id}}" value="5"{{#if (eq answer 5)}} checked{{/if}}>5 Vůbec nesouhlasím</label><br>
+        Komentář: <input type="text" name="otazka_0_{{id}}_text" value="{{comment}}"><br>
+        <label><input type="radio" name="otazka_0_{{id}}" value="null">Nebudu hodnotit</label>
+    </div>
+  {{/each}}
+{{/if}}
 <h2>Další komentáře</h2>
 <textarea name="comment">{{teacher.comment}}</textarea>
 <hr>
