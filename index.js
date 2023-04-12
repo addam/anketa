@@ -99,6 +99,10 @@ app.post('/ready', async function (req, res) {
 })
 
 app.get('/steady', async function (req, res) {
+  if (!req.group || !req.user) {
+    res.redirect(303, "/")
+    return
+  }
   const subjects = await db.chosenSubjects(req.group, req.user)
   res.render('steady', { title: "Přehled dotazníku", subjects, current: 'steady' })
 })
