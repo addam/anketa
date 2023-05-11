@@ -38,6 +38,19 @@ function setdefault(map, index, ...args) {
     }
     setdefault(inner, ...args)
   } else {
+    map[index] = args[0]
+  }
+}
+
+function setdefaultlist(map, index, ...args) {
+  if (args.length > 1) {
+    let inner = map[index]
+    if (!inner) {
+      inner = {}
+      map[index] = inner
+    }
+    setdefaultlist(inner, ...args)
+  } else {
     let list = map[index]
     if (list === undefined) {
       list = []
@@ -226,7 +239,7 @@ async answersGrouped(grouping) {
   //{"Adam Dominec": {"Informatika a komunikační technika": {"4.": {"Její/jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.": 3.14, ...}, {"5.": {...}}}, "Programování - seminář": {...}}, "Alan Orr": {...}, ...}
 },
 
-async summarize(fromDate) {
+async comments() {
   const comments = await db.all(`SELECT subject.name s, class.name c, question.question q, teacher.name t, comment
   FROM answer
   LEFT JOIN subject ON subject_id = subject.rowid
@@ -237,8 +250,24 @@ async summarize(fromDate) {
   result = {}
   for (const {t, s, c, q, comment} of comments) {
     if (comment != "") {
-      setdefault(result, t, s, c, q, comment)
+      setdefaultlist(result, t, s, c, q, comment)
     }
+  }
+  return result
+},
+
+async answers() {
+  const comments = await db.all(`SELECT subject.name s, class.name c, question.question q, teacher.name t, answer.answer a, count(answer) cnt
+  FROM answer
+  LEFT JOIN subject ON subject_id = subject.rowid
+  LEFT JOIN class ON answer.class_id = class.syllable
+  LEFT JOIN teacher ON subject.teacher_id = teacher.rowid
+  LEFT JOIN question ON question_id = question.rowid
+  WHERE substr(user_id, 1, 1) != 'x' AND q is not null
+  GROUP BY t, s, q, c, a`)
+  result = {}
+  for (const {t, s, q, c, a, cnt} of comments) {
+    setdefault(result, t, s, q, c, a, cnt)
   }
   return result
 }

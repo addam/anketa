@@ -1,0 +1,111 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+<style>
+h2, h3, canvas {
+  padding-left: 1em;
+}
+.heading {
+  cursor: pointer;
+}
+.heading.closed+section {
+  display: none
+}
+.heading.closed::before {
+  content: "\2795" " ";
+}
+.heading:not(.closed)::before {
+  content: "\2796" " ";
+}
+canvas {
+  width:100%;
+  max-width:700px;
+}
+
+</style>
+<script>
+function cel(name, parameters={}) {
+  const element = document.createElement(name);
+  for (const param in parameters) {
+    if (param === "class") {
+      for (const cls of parameters[param].split(" ")) {
+        element.classList.add(cls);
+      }
+    } else {
+      element[param] = parameters[param];
+    }
+  }
+  return element;
+}
+
+const palette = " #ce5c00 #8ae234 #729fcf #fcaf3e #ad7fa8 #fce94f #a40000 #204a87 #5c3566 #4e9a06 #ef2929".split(" ")
+const colors = {}
+
+function getColor(index, colors) {
+  let result = colors[index]
+  rnd = () => Math.floor(Math.random() * 256)
+  if (!result) {
+    result = palette.pop() || `rgb(${rnd()}, ${rnd()}, ${rnd()})`
+    colors[index] = result
+  }
+  return result
+}
+
+function addChart(canvas, data) {
+  const labels = Array(5).fill().map((x, i) => i + 1)
+  const datasets = Object.entries(data).map(([cls, cData]) => ({
+    label: cls,
+    backgroundColor: getColor(cls, colors),
+    data: labels.map(i => cData[i] || 0)
+  })).sort((a, b) => a.label > b.label)
+  new Chart(canvas, {
+    type: "bar",
+    data: { labels, datasets },
+    options: {
+      scales: {
+        y: {
+          min: 0,
+        }
+      }
+    }
+  });
+}
+
+function initSections() {
+  callback = (e) => {
+    e.target.classList.toggle("closed")
+  }
+  for (const heading of document.querySelectorAll(".heading")) {
+    heading.onclick = callback
+    heading.classList.add("closed")
+  }
+}
+
+function initCharts() {
+  for (const canvas of document.querySelectorAll("canvas")) {
+    addChart(canvas, JSON.parse(canvas.dataset["answers"]))
+  }
+}
+
+window.onload = () => {
+  initSections()
+  initCharts()
+}
+</script>
+<div class="container">
+<a href="/admin">^ přehled výsledků</a><br>
+</div>
+{{#each data as |tData teacher|}}
+  {{#if (eq teacher 'null')}}{{else}}
+    <h1>{{teacher}}:{{#each tData as |sData subject|}}{{#each sData as |qData question|}} {{avg qData 10}}{{/each}}{{/each}}</h1>
+    <div class="container">
+    {{#each tData as |sData subject|}}
+      <h2 class="heading">{{subject}}</h2>
+      <section>
+      {{#each sData as |qData question|}}
+        <h3>{{question}} (průměr: {{avg qData}})</h3>
+        <canvas data-answers='{{{stringify qData}}}'></canvas>
+      {{/each}}
+      </section>
+    {{/each}}
+    </div>
+  {{/if}}
+{{/each}}

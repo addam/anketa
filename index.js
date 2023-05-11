@@ -8,13 +8,46 @@ const { checksum, generateToken } = require("./token")
 const results = require("./results")
 
 var app = express()
+
+function sum(a) {
+  return a.length && a.reduce((a, b) => a+b)
+}
+
+function recursiveLength(a) {
+  if (typeof a != "object") {
+    return 1
+  }
+  return a.length || sum(Object.values(a).map(it => recursiveLength(it)))
+}
+
+function round(val, mul=100) {
+  return Math.round(mul * val) / mul
+}
+
+function recursiveAvg(obj, mul) {
+  let sum = 0
+  let count = 0
+  for (const suba of Object.values(obj)) {
+    for (const [k, v] of Object.entries(suba)) {
+      if (+k) {
+        sum += k * v
+        count += v
+      }
+    }
+  }
+  return round(sum / count, +mul || 100)
+}
+
 app.engine("html", handlebars({
   extname: ".html",
   helpers: {
     joinBy: (data, field, delimiter) => (data.map(it=>it[field]).join(delimiter)),
     inc: (num) => (num + 1),
     eq: (a, b) => (a == b),
-    add: (...args) => (args.slice(0, args.length - 1).reduce((a, b) => a+b)),
+    len: recursiveLength,
+    sum,
+    avg: recursiveAvg,
+    add: (...args) => sum(args.slice(0, args.length - 1)),
     stringify: (data) => (JSON.stringify(data)),
   }
 }))
@@ -71,8 +104,25 @@ app.get('/s/:token', login)
 
 app.get('/admin', async function (req, res) {
   if (req.group == shem && req.user == shem) {
-    const data = await db.summarize('2023-02-13 08:00:00')
-    res.render('admin', { title: "Výsledky dotazníku", data })
+    res.render('admin', { title: "Výsledky dotazníku" })
+  } else {
+    res.redirect(403, '/')
+  }
+})
+
+app.get('/admin-comments', async function (req, res) {
+  if (req.group == shem && req.user == shem) {
+    const data = await db.comments()
+    res.render('admin-comments', { title: "Komentáře dotazníku", data })
+  } else {
+    res.redirect(403, '/')
+  }
+})
+
+app.get('/admin-graphs', async function (req, res) {
+  if (req.group == shem && req.user == shem) {
+    const data = await db.answers()
+    res.render('admin-graphs', { title: "Grafy dotazníku", data })
   } else {
     res.redirect(403, '/')
   }

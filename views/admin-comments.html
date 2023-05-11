@@ -1,0 +1,71 @@
+<style>
+h2, h3, canvas {
+  padding-left: 1em;
+}
+.heading {
+  cursor: pointer;
+}
+.closed+section {
+  display: none
+}
+.heading.closed::before {
+  content: "\2795" " ";
+}
+.heading:not(.closed)::before {
+  content: "\2796" " ";
+}
+
+</style>
+<script>
+function cel(name, parameters={}) {
+  const element = document.createElement(name);
+  for (const param in parameters) {
+    if (param === "class") {
+      for (const cls of parameters[param].split(" ")) {
+        element.classList.add(cls);
+      }
+    } else {
+      element[param] = parameters[param];
+    }
+  }
+  return element;
+}
+
+function initSections() {
+  callback = (e) => {
+    e.target.classList.toggle("closed")
+  }
+  for (const heading of document.querySelectorAll(".heading")) {
+    heading.onclick = callback
+    heading.classList.add("closed")
+  }
+}
+
+window.onload = () => {
+  initSections()
+}
+</script>
+<div class="container">
+<a href="/admin">^ přehled výsledků</a><br>
+</div>
+{{#each data as |tData teacher|}}
+  <h1>{{#if (eq teacher 'null')}}Celkové komentáře{{else}}{{teacher}}{{/if}}</h1>
+  <div class="container">
+  {{#each tData as |sData subject|}}
+    {{#if (eq teacher 'null')}}{{else}}<h2>{{subject}}</h2>{{/if}}
+    {{#each sData as |cData class|}}
+      <h3 class="heading">Komentáře z třídy {{class}} (počet: {{len cData}})</h3>
+      <section>
+      {{#each cData as |qData question|}}
+        <h4>{{#if (eq question 'null')}}Osobní komentář{{else}}{{question}}{{/if}}</h4>
+        <ul>
+        {{#each qData as |comment|}}
+          <li>{{comment}}</li>
+        {{/each}}
+        </ul>
+      {{/each}}
+      </section>
+      {{/each}}
+    {{/each}}
+  </div>
+{{/each}}

@@ -10,7 +10,7 @@ body {
   color: var(--fg-b);
   margin: 0;
 }
-form {
+form, .container {
   padding: 0 1rem;
 }
 h1, h2, h3 {
