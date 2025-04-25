@@ -1,11 +1,8 @@
-const { Database } = require('./sqlite3');
+const Database = require('better-sqlite3')
 const fsp = require('fs').promises;
 
-var db;
-
-async function init() {
-  db = await Database.open('anketa.db');
-}
+const db = Database('anketa.db');
+db.pragma('journal_mode = WAL');
 
 function shuffle(array, hash) {
   for (var i = array.length - 1; i > 0; i--) {
@@ -66,7 +63,7 @@ function getDefault(map, key, type=Map) {
   return map.get(key) || (map.set(key, new type()).get(key))
 }
 
-function getDefaultMap(map, ...keys) {
+function getDefaultMap(map, keys) {
   let result = map
   for (const key of keys) {
     result = getDefault(result, key)
@@ -75,96 +72,81 @@ function getDefaultMap(map, ...keys) {
 }
 
 function getKeys(map, keys) {
-  return [...keys].map(it => map[it])
+  return 
 }
 
-init()
 module.exports = {
 
-questionStep(group, step) {
-  if (step < obecne.length) {
-    return { text: obecne[step], options: [1, 2, 3, 4, 5] }
-  } else {
-    step -= obecne.length
-  }
-  if (step < table[group].length) {
-    const [personId, subjectId, subgroup] = table[group][step]
-    const [name, gender] = people[personId]
-    const subject = subjects[subjectId]
-    return { name, subject, questions: jednoduche[gender], doubleQuestions: dvojite[gender], options: [1, 2, 3, 4, 5], subgroup }
-  }
-  return { done: true }
+listClasses() {
+  return db.prepare("SELECT name, id FROM class").all()
 },
 
-async listClasses() {
-  return await db.all("SELECT name, syllable FROM class")
-},
-
-async listOptionalSubjects(gid, uid) {
-  const result = await db.all(`SELECT subject.rowid id, teacher.name teacherName, subject.name subjectName
+listOptionalSubjects(gid, uid) {
+  const result = db.prepare(`SELECT subject.id, teacher.name teacherName, subject.name subjectName
     FROM subject
-    JOIN teacher ON teacher.rowid = subject.teacher_id
+    JOIN teacher ON teacher.id = subject.teacher_id
     WHERE subject.class_id = ?
     AND subject.optional > 0
-    ORDER BY subjectName, teacherName`, [gid])
-  const choice = new Set(await db.allone("SELECT subject_id id FROM subject_choice WHERE user_id = ?", [uid]))
+    ORDER BY subjectName, teacherName`).all(gid);
+  const choice = new Set(db.prepare("SELECT subject_id id FROM subject_choice WHERE user_id = ?").pluck().all(uid))
   for (const subject of result) {
     subject.selected = choice.has(subject.id)
   }
   return result
 },
 
-async chooseSubjects(gid, uid, body) {
-  await db.run("DELETE FROM subject_choice WHERE class_id = ? and user_id = ?", [gid, uid])
-  for await (const { rowid: sid } of db.each("SELECT rowid FROM subject WHERE optional = 1 AND class_id = ?", [gid])) {
+chooseSubjects(gid, uid, body) {
+  db.prepare("DELETE FROM subject_choice WHERE class_id = ? and user_id = ?").run(gid, uid);
+  const insertQuery = db.prepare("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)");
+  for (const sid of db.prepare("SELECT id FROM subject WHERE optional = 1 AND class_id = ?").pluck().all(gid)) {
     if (body[`subject_${sid}`] == 1) {
-      // this run cannot be awaited because it does not return data. That actually sucks pretty bad.
-      db.run("INSERT INTO subject_choice (subject_id, class_id, user_id) VALUES (?, ?, ?)", [sid, gid, uid])
+      insertQuery.run(sid, gid, uid);
     }
   }
 },
 
-async chosenSubjects(gid, uid) {
-  const subjects = await db.all(`SELECT subject.rowid id, teacher.rowid teacherId, teacher.name teacherName, subject.name subjectName
+chosenSubjects(gid, uid) {
+  const subjects = db.prepare(`SELECT subject.id, teacher.id teacherId, teacher.name teacherName, subject.name subjectName
     FROM subject
-    JOIN teacher ON teacher.rowid = subject.teacher_id
-    LEFT JOIN subject_choice sc ON sc.subject_id = subject.rowid
+    JOIN teacher ON teacher.id = subject.teacher_id
+    LEFT JOIN subject_choice sc ON sc.subject_id = subject.id
     WHERE subject.class_id = ? 
-    AND (subject.optional = 0 OR sc.user_id = ?)`, [gid, uid])
+    AND (subject.optional = 0 OR sc.user_id = ?)`).all(gid, uid);
   const result = groupByTeacher(subjects)
   const salt = 17 * uid.charCodeAt(0) + 37 * uid.charCodeAt(1)
   shuffle(result, ({ teacherId }) => salt * teacherId)
   return result
 },
 
-async isFilledEarly(group, user, time) {
-  const count = await db.getone(`SELECT count(*) FROM answer WHERE class_id = ? AND user_id = ? AND date <= ?`, [group, user, time])
+isFilledEarly(group, user, time) {
+  const count = db.prepare(`SELECT count(*) FROM answer WHERE class_id = ? AND user_id = ? AND date <= ?`).pluck().get(group, user, time);
   return count
 },
 
-async fillQuestions(group, user, teacher) {
+// fill questions and existing answers to a `teacher` object (consisting of all subjects taught by the teacher)
+fillQuestions(group, user, teacher) {
     if (!teacher) {
       return null
     }
-    const tid = Number(teacher.teacherId)
-    for (const sub of teacher.subjects) {
-      sub.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
+    const questionsQuery = db.prepare(`SELECT q.id, q.question, a.answer, a.comment
         FROM question q
-        LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.subject_id = ? AND a.class_id = ?
-        WHERE q.teacher_id IS null
-        AND (q.class_id = ? OR q.class_id IS null)`, [user, sub.id, group, group])
+        LEFT JOIN answer a ON a.question_id = q.id AND a.user_id = ? AND a.subject_id = :subjectId
+        WHERE (q.subject_id is null OR q.subject_id = :subjectId) -- global or personalized question
+        AND (q.class_id = ? OR q.class_id IS null)`);
+    for (const subject of teacher.subjects) {
+      subject.questions = questionsQuery.all(user, group, { subjectId: subject.id });
+      for (const question of subject.questions) {
+        if (question.comment === null) {
+          question.answer = undefined;
+        }
+      }
     }
-    teacher.comment = await db.getone(`SELECT a.comment
-      FROM answer a 
-      JOIN subject s on s.rowid = a.subject_id
+    const tid = Number(teacher.teacherId)
+    teacher.comment = db.prepare(`SELECT a.comment FROM answer a 
+      JOIN subject s on s.id = a.subject_id
       WHERE a.question_id IS NULL 
       AND a.class_id = ? AND a.user_id = ?
-      AND s.teacher_id = ?`, [group, user, tid])
-    teacher.questions = await db.all(`SELECT q.rowid id, q.question, a.answer, a.comment
-      FROM question q
-      LEFT JOIN answer a ON a.question_id = q.rowid AND a.user_id = ? AND a.class_id = ?
-      WHERE q.teacher_id = ?
-      AND (q.class_id = ? OR q.class_id IS null)`, [user, group, tid, group])
+      AND s.teacher_id = ?`).pluck().get(group, user, tid);
     return teacher
 },
 
@@ -172,6 +154,8 @@ async answer(group, user, step, client, content) {
   const time = new Date()
   const regex = /^otazka_([0-9]+)_([0-9]+)$/
   let subjectId
+  const answerQuery = db.prepare(`REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING id`);
   for (const key of Object.keys(content)) {
     const match = regex.exec(key)
     if (match === null) {
@@ -182,27 +166,29 @@ async answer(group, user, step, client, content) {
     const comment = (content[`${key}_text`] || "").replace(/\r?\n|\r/g, "//")
     // basic questions are stored with correct keys: subject_id, question_id
     // custom questions are stored: subject_id = 0, question_id links to the teacher
-    const { rowid } = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, ?, ?, datetime('now','localtime')) RETURNING rowid", [Number(sid), Number(qid), group, user, num, comment])
+    const { id: aid } = answerQuery.get(Number(sid), Number(qid), group, user, num, comment);
     subjectId = subjectId || Number(sid)
-    const log = [rowid, time.toJSON(), client, group, user, step, num, comment]
+    const log = [aid, time.toJSON(), client, group, user, step, num, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
   // teacher comment is stored: subject_id = (first subject teached), question_id = null
   if (subjectId && content.comment) {
-    const { rowid } = await db.get("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, null, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [subjectId, group, user, content.comment])
-    const log = [rowid, time.toJSON(), client, group, user, step, content.comment]
+    db.prepare(`DELETE FROM answer
+      WHERE subject_id = ? AND question_id is null AND class_id = ? AND user_id = ? AND answer is null`).run(subjectId, group, user);
+    const { id: aid } = answerQuery.get(subjectId, null, group, user, null, content.comment);
+    const log = [aid, time.toJSON(), client, group, user, step, content.comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
 },
 
-async generalQuestions(group, user, teacherId) {
-  return await db.all(`SELECT q.rowid id, q.question, a.comment
-  FROM question q
-  LEFT JOIN answer a ON a.question_id = q.rowid AND a.class_id = ? AND a.user_id = ?
-  WHERE q.teacher_id = ?`, [group, user, teacherId])
+generalQuestions(group, user, subjectName) {
+  return db.prepare(`SELECT q.id, q.question, a.comment
+    FROM question q
+    LEFT JOIN answer a ON a.question_id = q.id AND a.class_id = ? AND a.user_id = ?
+    WHERE q.subject_id = (select id from subject where name = ?)`).all(group, user, subjectName);
 },
 
-async generalAnswer(group, user, teacherId, client, content) {
+async generalAnswer(group, user, subjectName, client, content) {
   const time = new Date()
   const regex = /^otazka_([0-9]+)$/
   for (const key of Object.keys(content)) {
@@ -212,25 +198,26 @@ async generalAnswer(group, user, teacherId, client, content) {
     }
     const [_, qid] = match
     const comment = (content[key] || "").replace(/\r?\n|\r/g, "//")
-    const rowid = await db.getone("REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date) VALUES (?, ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING rowid", [teacherId, qid, group, user, comment])
-    const log = [rowid, time.toJSON(), client, group, user, comment]
+    const aid = db.prepare(`REPLACE INTO answer (subject_id, question_id, class_id, user_id, answer, comment, date)
+      VALUES ((select id from subject where name = ?), ?, ?, ?, null, ?, datetime('now','localtime')) RETURNING id`).pluck()
+      .get(subjectName, qid, group, user, comment);
+    const log = [aid, time.toJSON(), client, group, user, comment]
     await fsp.appendFile("data.csv", log.join(",") + "\n", ()=>{})
   }
 },
 
-async answersGrouped(grouping) {
-  const data = await db.all(`SELECT teacher.name t, subject.name s, class.name c, question.question q, avg(answer) avg, count(answer) count
-  FROM answer
-  JOIN subject ON subject.rowid = answer.subject_id
-  JOIN class ON class.syllable = answer.class_id
-  JOIN teacher ON teacher.rowid = subject.teacher_id
-  JOIN question ON question.rowid = answer.question_id
-  WHERE substr(user_id, 1, 1) != 'x'
-  GROUP BY ${[...grouping]}
-  `)
+answersGrouped(grouping) {
+  const query = db.prepare(`SELECT teacher.name t, subject.name s, class.name c, question.question q, avg(answer) avg, count(answer) count
+    FROM answer
+    JOIN subject ON subject.id = answer.subject_id
+    JOIN class ON class.id = answer.class_id
+    JOIN teacher ON teacher.id = subject.teacher_id
+    JOIN question ON question.id = answer.question_id
+    WHERE substr(user_id, 1, 1) != 'x'
+    GROUP BY ${[...grouping]}`);
   const result = new Map()
-  for (const row of data) {
-    const sub = getDefaultMap(result, ...getKeys(row, grouping))
+  for (const row of query.iterate()) {
+    const sub = getDefaultMap(result, [...grouping].map(it => row[it]));
     sub.set("avg", row.avg)
     sub.set("count", row.count)
   }
@@ -239,16 +226,16 @@ async answersGrouped(grouping) {
   //{"Adam Dominec": {"Informatika a komunikační technika": {"4.": {"Její/jeho hodnocení (známky, slovní hodnocení, ústní komentáře atd.) mě vede k tomu, jak se zlepšovat.": 3.14, ...}, {"5.": {...}}}, "Programování - seminář": {...}}, "Alan Orr": {...}, ...}
 },
 
-async comments() {
-  const comments = await db.all(`SELECT subject.name s, class.name c, question.question q, teacher.name t, comment
-  FROM answer
-  LEFT JOIN subject ON subject_id = subject.rowid
-  LEFT JOIN class ON answer.class_id = class.syllable
-  LEFT JOIN teacher ON subject.teacher_id = teacher.rowid
-  LEFT JOIN question ON question_id = question.rowid
-  WHERE substr(user_id, 1, 1) != 'x'`)
+comments() {
+  const query = db.prepare(`SELECT subject.name s, class.name c, question.question q, teacher.name t, comment
+    FROM answer
+    LEFT JOIN subject ON answer.subject_id = subject.id
+    LEFT JOIN class ON answer.class_id = class.id
+    LEFT JOIN teacher ON subject.teacher_id = teacher.id
+    LEFT JOIN question ON question_id = question.id
+    WHERE substr(user_id, 1, 1) != 'x'`);
   result = {}
-  for (const {t, s, c, q, comment} of comments) {
+  for (const { t, s, c, q, comment } of query.iterate()) {
     if (comment != "") {
       setdefaultlist(result, t, s, c, q, comment)
     }
@@ -256,17 +243,17 @@ async comments() {
   return result
 },
 
-async answers() {
-  const comments = await db.all(`SELECT subject.name s, class.name c, question.question q, teacher.name t, answer.answer a, count(answer) cnt
+answers() {
+  const query = db.prepare(`SELECT subject.name s, class.name c, question.question q, teacher.name t, answer.answer a, count(answer) cnt
   FROM answer
-  LEFT JOIN subject ON subject_id = subject.rowid
-  LEFT JOIN class ON answer.class_id = class.syllable
-  LEFT JOIN teacher ON subject.teacher_id = teacher.rowid
-  LEFT JOIN question ON question_id = question.rowid
+  LEFT JOIN subject ON answer.subject_id = subject.id
+  LEFT JOIN class ON answer.class_id = class.id
+  LEFT JOIN teacher ON subject.teacher_id = teacher.id
+  LEFT JOIN question ON question_id = question.id
   WHERE substr(user_id, 1, 1) != 'x' AND q is not null
-  GROUP BY t, s, q, c, a`)
+  GROUP BY t, s, q, c, a`);
   result = {}
-  for (const {t, s, q, c, a, cnt} of comments) {
+  for (const { t, s, q, c, a, cnt } of query.iterate()) {
     setdefault(result, t, s, q, c, a, cnt)
   }
   return result

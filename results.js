@@ -24,23 +24,26 @@ function forEachIterated(map, depth, callback, keyCallback, prefix=[]) {
   }
 }
 
+// items: [column1, column2, ...], where each column is a compound key of [value1, ...]
+// callback: (row, startCol, endCol, value) => void
 function forEachGrouped(items, callback) {
-  const previous = []
-  items.forEach((key, row) => {
-    key.forEach((value, column) => {
-      const prev = previous[column] || [null, 0]
-      if (value !== prev[0]) {
+  const previous = [] // list of last changed { value, column } on each level of the compound key
+  items.forEach((key, column) => {
+    key.forEach((value, row) => {
+      const prev = previous[row] || [null, 0]
+      if (value !== prev.value) {
         if (prev[0] !== null) {
-          callback(column, prev[1], row, prev[0])
+          callback(row, prev.column, column, prev.value)
         }
-        previous[column] = [value, row]
+        previous[row] = { value, column }
       }
     })
   })
-  if (previous.length) {
-    const prev = previous[0]
-    callback(0, prev[1], items.length, prev[0])
-  }
+  previous.forEach((prev, row) => {
+    if (prev.column < items.length) {
+      callback(row, prev.column, items.length, prev.value)
+    }
+  });
 }
 
 async function fillDataset(db) {
@@ -54,8 +57,9 @@ async function fillDataset(db) {
 
   for (const grouping of groupTypes) {
     const ws = wb.addWorksheet(grouping)
-    const data = await db.answersGrouped(grouping + "q")
+    const data = db.answersGrouped(grouping + "q")
     const header = [...grouping]
+    console.log("initial header:", header);
     let row = 2
     const leftMerger = [...grouping].map(it => [null, 0])
     forEachIterated(data, grouping.length, (prefix, rowData) => {
@@ -69,11 +73,14 @@ async function fillDataset(db) {
       forEachIterated(rowData, 2, (top, value) => {
         const colName = top.join("|")
         const column = (header.indexOf(colName) + 1) || header.push(colName)
-        ws.cell(row, column).number(value)
+        if (value !== null) {
+          ws.cell(row, column).number(value)
+        }
       })
     }, (column, height, value) => {
       ws.cell(row - height + 1, column + 1, row, column + 1, true).string(value).style(bold)
     })
+    console.log("final header:", header);
     forEachGrouped(header.map(it => it.split("|")), (row, startCol, endCol, value) => {
       ws.cell(row + 1, startCol + 1, row + 1, endCol, true).string(value)
     })

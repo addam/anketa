@@ -1,5 +1,5 @@
 const crypto = require("crypto")
-const { salt } = require("./config")
+const { salt } = require("./config.json")
 
 function syllable(int) {
   const sa = "aeiu".split("")
@@ -15,7 +15,7 @@ function readable(buffer) {
 function checksum(text) {
 	const hmac = crypto.createHmac("sha256", salt)
 	hmac.update(text)
-  return readable(hmac.digest().slice(0, 4))
+  return readable(hmac.digest().slice(0, 5))
 }
 
 function generateToken(group, user) {

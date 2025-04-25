@@ -5,8 +5,11 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const hb = require('handlebars')
 
-const { Database } = require('./sqlite3');
+const Database = require('better-sqlite3');
 const { syllable: getSyllable, generateToken } = require('./token');
+
+const enableStres = false;
+const enableVyuka = true;
 
 function enumerate(array) {
   return array.map((x, i) => [i, x])
@@ -19,7 +22,7 @@ async function qr(text, transform) {
 }
 
 async function main() {
-  const db = await Database.open('anketa.db')
+  const db = Database('anketa.db')
   const file = await fsp.readFile("template.svg", { encoding: "utf-8" })
   const xml = await xml2js.parseStringPromise(file)
   const builder = new xml2js.Builder({ renderOpts: {pretty: false}});
@@ -30,36 +33,47 @@ async function main() {
   const templ2 = hb.compile(JSON.stringify(pages[0].g.pop()))
   const p1 = hb.compile(JSON.stringify(pages.pop()))
   const p2 = hb.compile(JSON.stringify(pages.pop()))
-  for (const {syllable, name: trida} of await db.all("SELECT syllable, name FROM class")) {
+  for (const { id: syllable, name: trida } of db.prepare("SELECT id, name FROM class").all()) {
     const userCount = 29
     const testCount = 1
     const tokens = Array(userCount + testCount).fill().map((_, i) => i < testCount ? `x${i+1}` : getSyllable(i - testCount)).map(s => generateToken(syllable, s))
     for (const [i, token] of enumerate(tokens)) {
       if (i % 10 == 0) {
         const j = pages.length
-        const np = [JSON.parse(p1({ trida })), JSON.parse(p2({ trida }))]
-        np[0].$.id = np[0].$["inkscape:label"] = `page${j}`
-        np[0].$.transform = `translate(0,${320 * j})`
-        np[1].$.id = np[1].$["inkscape:label"] = `page${j + 1}`
-        np[1].$.transform = `translate(0,${320 * (j + 1)})`
-        pages.unshift(...np)
-        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * j}})
-        pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * (j + 1)}})
+        if (enableVyuka) {
+          const np = JSON.parse(p2({ trida }));
+          np.$.id = np.$["inkscape:label"] = `page${enableStres + j}`
+          np.$.transform = `translate(0,${320 * (j + 1)})`
+          pages.unshift(np)
+          pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * (j + 1)}})
+        }
+        if (enableStres) {
+          const np = JSON.parse(p1({ trida }));
+          np.$.id = np.$["inkscape:label"] = `page${j}`
+          np.$.transform = `translate(0,${320 * j})`
+          pages.unshift(np)
+          pagelist.push({$: {...pagelistTempl.$, x: 0, y: 320 * j}})
+        }
       }
-      const data = { stres: "s-gjs.jdem.cz", stresLong: "stres.dominec.eu", vyuka: "v-gjs.jdem.cz", vyukaLong: "vyuka.dominec.eu", syllable, token };
+      const data = { stres: "s-gjs.jdem.cz", stresLong: "stres.dominec.eu", vyuka: "vyuka.dominec.eu", vyukaLong: "vyuka.dominec.eu", syllable, token };
       const x = i % 2
       const y = Math.floor(i / 2) % 5
-      const d1 = JSON.parse(templ1(data));
-      d1.$.transform = `translate(${21 + 85 * x},${11 + 55 * y})`
-      d1.g[2] = await qr(`https://${data.stresLong}/s/${syllable}`, "translate(49,17)")
-      pages[0].g.push(d1)
-      const d2 = JSON.parse(templ2(data));
-      if (token[2] == "x") {
-        d2.rect[0].$.style = "fill:#fcc;stroke-width:3;stroke:white;"
+      if (enableStres) {
+        const d1 = JSON.parse(templ1(data));
+        d1.$.transform = `translate(${21 + 85 * x},${11 + 55 * y})`
+        d1.g[2] = await qr(`https://${data.stresLong}/s/${syllable}`, "translate(49,17)")
+        pages[0].g.push(d1)
       }
-      d2.$.transform = `translate(${-6 - 85 * x},${-298 + 55 * y })`
-      d2.g[2] = await qr(`https://${data.vyukaLong}/s/${token}`, "translate(160,326)")
-      pages[1].g.push(d2)
+      if (enableVyuka) {
+        const d2 = JSON.parse(templ2(data));
+        if (token[2] == "x") {
+          d2.rect[0].$.style = "fill:#fcc;stroke-width:3;stroke:white;"
+        }
+        d2.$.transform = `translate(${-6 - 85 * x},${-298 + 55 * y })`
+        d2.g[2] = await qr(`https://${data.vyukaLong}/s/${token}`, "translate(160,326)")
+        pages[enableStres + 0].g.push(d2)
+        console.log(token);
+      }
     }
   }
   data = builder.buildObject(xml);

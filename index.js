@@ -1,8 +1,6 @@
 const express = require("express")
 const cookieParser = require('cookie-parser')
-const assert = require("assert")
 const handlebars = require("express-handlebars")
-const url = require("url")
 const db = require("./db-sqlite")
 const { checksum, generateToken } = require("./token")
 const results = require("./results")
@@ -43,7 +41,7 @@ app.engine("html", handlebars({
   helpers: {
     joinBy: (data, field, delimiter) => (data.map(it=>it[field]).join(delimiter)),
     inc: (num) => (num + 1),
-    eq: (a, b) => (a == b),
+    eq: (a, b) => (a === b),
     len: recursiveLength,
     sum,
     avg: recursiveAvg,
@@ -56,20 +54,8 @@ app.set("views", "views")
 app.use(express.static("static"))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-// TODO fix error handling
-//app.use(errorHandler)
 
 const shem = "xy"
-
-function forceInt(input) {
-  const result = Math.round(input)
-  return (Number.isFinite(result)) ? result : 0
-}
-
-function errorHandler (err, req, res, next) {
-  console.error("errorHandler", err)
-  res.status(500).send({ error: 'Something failed!' })
-}
 
 function getClient(req) {
   return req.headers['x-forwarded-for'] || req.connection.remoteAddress
@@ -91,7 +77,7 @@ app.get("/", function (req, res) {
 	res.render("index", { title: "Studentské dotazníky" })
 })
 
-async function login(req, res) {
+function login(req, res) {
   res.cookie('token', (req.params.token || req.body.token || req.cookies.token || ""), { secure: true })
   if (req.group == shem && req.user == shem) {
     res.redirect(303, '/admin')
@@ -102,7 +88,7 @@ async function login(req, res) {
 app.post("/", login)
 app.get('/s/:token', login)
 
-app.get('/admin', async function (req, res) {
+app.get('/admin', function (req, res) {
   if (req.group == shem && req.user == shem) {
     res.render('admin', { title: "Výsledky dotazníku" })
   } else {
@@ -110,61 +96,65 @@ app.get('/admin', async function (req, res) {
   }
 })
 
-app.get('/admin-comments', async function (req, res) {
+app.get('/admin-comments', function (req, res) {
   if (req.group == shem && req.user == shem) {
-    const data = await db.comments()
+    const data = db.comments()
     res.render('admin-comments', { title: "Komentáře dotazníku", data })
   } else {
     res.redirect(403, '/')
   }
 })
 
-app.get('/admin-graphs', async function (req, res) {
+app.get('/admin-graphs', function (req, res) {
   if (req.group == shem && req.user == shem) {
-    const data = await db.answers()
+    const data = db.answers()
     res.render('admin-graphs', { title: "Grafy dotazníku", data })
   } else {
     res.redirect(403, '/')
   }
 })
 
-app.get('/ready', async function (req, res) {
+app.get('/ready', function (req, res) {
   if (!req.group || !req.user) {
     res.redirect(303, "/")
   } else if (req.group == "xy") {
     res.redirect(303, "/tokens.csv")
   } else {
-    const subjectOptions = await db.listOptionalSubjects(req.group, req.user)
+    const subjectOptions = db.listOptionalSubjects(req.group, req.user)
     res.render('ready', { title: "Výběr předmětů", subjectOptions, current: 'ready' })
   }
 })
 
-app.post('/ready', async function (req, res) {
+app.post('/ready', function (req, res) {
   if (req.group && req.user) {
-    await db.chooseSubjects(req.group, req.user, req.body)
+    db.chooseSubjects(req.group, req.user, req.body)
     res.redirect(303, "/steady")
   } else {
     res.redirect(303, "/")
   }
 })
 
-app.get('/steady', async function (req, res) {
+app.get('/steady', function (req, res) {
   if (!req.group || !req.user) {
     res.redirect(303, "/")
     return
   }
-  const subjects = await db.chosenSubjects(req.group, req.user)
+  const subjects = db.chosenSubjects(req.group, req.user)
   res.render('steady', { title: "Přehled dotazníku", subjects, current: 'steady' })
 })
 
-app.post('/steady', async function (req, res) {
-  res.redirect(303, "/first")
+app.post('/steady', function (req, res) {
+  if (db.generalQuestions(req.group, req.user, 'first').length) {
+    res.redirect(303, "/first");
+  } else {
+    res.redirect(303, '/go/1');
+  }
 })
 
-app.get('/first', async function (req, res) {
+app.get('/first', function (req, res) {
   if (req.group && req.user) {
-    const questions = await db.generalQuestions(req.group, req.user, 'first')
-    const subjects = await db.chosenSubjects(req.group, req.user)
+    const questions = db.generalQuestions(req.group, req.user, 'first')
+    const subjects = db.chosenSubjects(req.group, req.user)
     res.render('first', { title: "Úvod dotazníku", questions, subjects, current: 'first' })
   } else {
     res.redirect(303, '/')
@@ -180,13 +170,13 @@ app.post('/first', async function (req, res) {
   }
 })
 
-app.get('/go/:step', async function (req, res) {
+app.get('/go/:step', function (req, res) {
   const step = Number(req.params.step)
   if (req.group && req.user && step) {
-    const subjects = await db.chosenSubjects(req.group, req.user)
+    const subjects = db.chosenSubjects(req.group, req.user)
     const teacher = subjects[step - 1]
     if (teacher) {
-      await db.fillQuestions(req.group, req.user, teacher)
+      db.fillQuestions(req.group, req.user, teacher)
       res.render('go', { title: teacher.teacherName, teacher, subjects, current: `go/${step}` })
     }
   } else {
@@ -202,18 +192,20 @@ app.post('/go/:step', async function (req, res) {
     return
   }
   await db.answer(req.group, req.user, step, getClient(req), req.body)
-  const subjects = await db.chosenSubjects(req.group, req.user)
+  const subjects = db.chosenSubjects(req.group, req.user)
   if (step < subjects.length) {
     res.redirect(303, `/go/${step + 1}`)
-  } else {
+  } else if (db.generalQuestions(req.group, req.user, 'last').length) {
     res.redirect(303, '/last')
+  } else {
+    res.redirect(303, '/done')
   }
 })
 
-app.get('/last', async function (req, res) {
+app.get('/last', function (req, res) {
   if (req.group && req.user) {
-    const questions = await db.generalQuestions(req.group, req.user, 'last')
-    const subjects = await db.chosenSubjects(req.group, req.user)
+    const questions = db.generalQuestions(req.group, req.user, 'last')
+    const subjects = db.chosenSubjects(req.group, req.user)
     res.render('last', { title: "Závěr dotazníku", questions, subjects, current: 'last' })
   } else {
     res.redirect(303, '/')
@@ -236,10 +228,9 @@ app.get('/done', async function (req, res) {
 app.get("/tokens.csv", async function (req, res) {
   if (req.group === shem) {
     if (req.user === shem) {
-      const tridy = await db.listClasses()
+      const tridy = db.listClasses()
       console.log(tridy)
-      //const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(shem, syllable))
-      const data = tridy.map(({ name, syllable }) => `${name};` + generateToken(syllable, "x3"))
+      const data = tridy.map(({ name, id }) => `${name};` + generateToken(id, "x3"))
       res.attachment("tokens-admin.csv");
       res.send(data.join("\r\n"))
     } else {

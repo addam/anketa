@@ -1,0 +1,5 @@
+{
+    "username": "bakalari_user",
+    "password": "bakalari_password",
+    "salt": "any_random_string_you_choose"
+}
